@@ -5,6 +5,7 @@ import '../branding.dart';
 import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../localization/fa_strings.dart';
+import '../state/profile_scope.dart';
 import '../theme/app_theme.dart';
 import '../widgets/developer_footer.dart';
 import '../widgets/premium_backdrop.dart';
@@ -53,6 +54,12 @@ class HomeScreen extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header();
 
+  String _displayName(BuildContext context) {
+    final String? name = ProfileScope.of(context).profile?.displayName;
+    return (name == null || name.isEmpty) ? '' : name;
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final AppPalette palette = context.appPalette;
@@ -63,7 +70,7 @@ class _Header extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              FaStrings.hello,
+              'سلام ${_displayName(context)} 👋',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

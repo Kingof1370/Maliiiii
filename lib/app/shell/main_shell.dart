@@ -8,14 +8,7 @@ import '../screens/settings_screen.dart';
 
 /// پوستهٔ اصلی اپلیکیشن با ناوبری پایین (RTL).
 class MainShell extends StatefulWidget {
-  const MainShell({
-    super.key,
-    required this.themeMode,
-    required this.onThemeModeChanged,
-  });
-
-  final ThemeMode themeMode;
-  final ValueChanged<ThemeMode> onThemeModeChanged;
+  const MainShell({super.key});
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -30,17 +23,14 @@ class _MainShellState extends State<MainShell> {
       const HomeScreen(),
       const ReportsScreen(),
       const LoansScreen(),
-      SettingsScreen(
-        themeMode: widget.themeMode,
-        onThemeModeChanged: widget.onThemeModeChanged,
-      ),
+      const SettingsScreen(),
     ];
 
     return Scaffold(
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onDestinationSelected: (int value) => setState(() => _index = value),
         destinations: const <NavigationDestination>[
           NavigationDestination(
             icon: Icon(Icons.home_outlined),

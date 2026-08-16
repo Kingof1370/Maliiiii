@@ -55,3 +55,18 @@
 - داشبورد فعلی اعداد را از `FinancialLedger` واقعی می‌خواند
   (`totalBalance`, `availableMoney`, `monthlySummary`, `outstandingDebt`,
   `forecast`, `healthScore`) و هیچ عدد ساختگی ندارد.
+
+## پروفایل و امنیت (P003)
+
+- `lib/src/profile.dart`: مدل `UserProfile` (نام، نام خانوادگی، نام مستعار،
+  واحد پول، لحن اعلان، حالت نمایش، AI) با اعتبارسنجی + `PinHasher` برای هش
+  SHA-256 رمز با salt تصادفی. رمز خام هرگز ذخیره یا لاگ نمی‌شود.
+- `lib/app/data/`: `ProfileStore` (مرز)، `FileProfileStore` (JSON روی فایل
+  با نوشتن اتمیک: فایل موقت + rename) و `ProfileRepository` (کش حافظه‌ای).
+- `lib/app/state/`: `ProfileController` با وضعیت‌های
+  `loading / needsOnboarding / locked / ready` و `ProfileScope`
+  (InheritedNotifier) برای دسترسی صفحات.
+- مسیر اجرا: بارگذاری ← (نیاز) onboarding ← (در صورت PIN) قفل ← پوستهٔ اصلی.
+  انتخاب روشن/تاریک از پروفایل خوانده می‌شود و تغییرش پایدار است.
+- واحد پول (تومان/ریال) در پروفایل ذخیره می‌شود؛ منطق مالی همچنان با واحد
+  صحیح کوچک کار می‌کند و این enum فقط نمایش را تعیین می‌کند.

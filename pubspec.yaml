@@ -1,14 +1,16 @@
 name: maliiiii
 description: دستیار مالی شخصی فارسی — آفلاین، خصوصی و سه‌بعدی
 publish_to: none
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: ">=3.10.0 <4.0.0"
 
 dependencies:
+  crypto: ^3.0.7
   flutter:
     sdk: flutter
+  path_provider: ^2.1.6
 
 dev_dependencies:
   flutter_test:

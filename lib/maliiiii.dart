@@ -5,3 +5,4 @@ export 'src/engine.dart';
 export 'src/models.dart';
 export 'src/money.dart';
 export 'src/number_format.dart';
+export 'src/profile.dart';
