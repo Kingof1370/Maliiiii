@@ -6,6 +6,7 @@ import 'package:maliiiii/app/screens/settings_screen.dart';
 import 'package:maliiiii/main.dart';
 import 'package:maliiiii/maliiiii.dart';
 
+import 'memory_ledger_store.dart';
 import 'memory_profile_store.dart';
 import 'test_helpers.dart';
 
@@ -13,7 +14,9 @@ UserProfile seededProfile() =>
     UserProfile.create(firstName: 'علی', lastName: 'بهمنی');
 
 Future<void> pumpApp(WidgetTester tester, ProfileStore store) async {
-  await tester.pumpWidget(MaliiiiiApp(profileStore: store));
+  await tester.pumpWidget(
+    MaliiiiiApp(profileStore: store, ledgerStore: MemoryLedgerStore()),
+  );
   await tester.pumpAndSettle();
 }
 
@@ -47,7 +50,6 @@ void main() {
     expect(find.text('سلام 👋 به مالیار خوش آمدی'), findsOneWidget);
     expect(find.byKey(const Key('field-first-name')), findsOneWidget);
 
-    // دکمهٔ شروع در پایین فرم است؛ ابتدا اسکرول می‌کنیم
     await scrollToIn(
       tester,
       find.byKey(const Key('profile-form-submit')),
@@ -67,6 +69,40 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-form-submit')));
     await tester.pumpAndSettle();
 
+    expect(find.text('سلام علی 👋'), findsOneWidget);
+  });
+
+  testWidgets('home shows persisted ledger numbers', (WidgetTester tester) async {
+    final FinancialLedger seededLedger = FinancialLedger(
+      accounts: <Account>[
+        Account(
+          id: 'bank',
+          name: 'بانک',
+          type: AccountType.bank,
+          openingBalance: const Money(1500000),
+        ),
+      ],
+      transactions: <LedgerTransaction>[
+        LedgerTransaction(
+          id: 'inc1',
+          accountId: 'bank',
+          amount: const Money(2000000),
+          date: DateTime(2026, 8, 1),
+          kind: TransactionKind.income,
+        ),
+      ],
+    );
+    final MemoryProfileStore profileStore =
+        MemoryProfileStore(seededProfile());
+    await tester.pumpWidget(
+      MaliiiiiApp(
+        profileStore: profileStore,
+        ledgerStore: MemoryLedgerStore(seededLedger),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('۳,۵۰۰,۰۰۰'), findsWidgets);
     expect(find.text('سلام علی 👋'), findsOneWidget);
   });
 

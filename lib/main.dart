@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app/branding.dart';
+import 'app/data/ledger_repository.dart';
+import 'app/data/ledger_store.dart';
 import 'app/data/profile_repository.dart';
 import 'app/data/profile_store.dart';
 import 'app/design/app_colors.dart';
 import 'app/screens/onboarding_screen.dart';
 import 'app/screens/pin_screen.dart';
 import 'app/shell/main_shell.dart';
+import 'app/state/ledger_controller.dart';
+import 'app/state/ledger_scope.dart';
 import 'app/state/profile_controller.dart';
 import 'app/state/profile_scope.dart';
 import 'app/theme/app_theme.dart';
@@ -18,42 +22,55 @@ import 'src/profile.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final Directory docs = await getApplicationDocumentsDirectory();
-  final ProfileStore store =
+  final ProfileStore profileStore =
       FileProfileStore(File('${docs.path}/user_profile.json'));
-  runApp(MaliiiiiApp(profileStore: store));
+  final LedgerStore ledgerStore =
+      FileLedgerStore(File('${docs.path}/ledger.json'));
+  runApp(MaliiiiiApp(profileStore: profileStore, ledgerStore: ledgerStore));
 }
 
 /// نقطهٔ ورود اپلیکیشن.
 ///
 /// مسیر اجرا بر اساس وضعیت پروفایل:
 /// بارگذاری ← (نیاز به معرفی) onboarding ← (قفل PIN) ← پوستهٔ اصلی.
+/// دفترکل مالی به‌صورت موازی بارگذاری و از طریق [LedgerScope] در دسترس
+/// همهٔ صفحات قرار می‌گیرد.
 class MaliiiiiApp extends StatefulWidget {
-  const MaliiiiiApp({super.key, required this.profileStore});
+  const MaliiiiiApp({
+    super.key,
+    required this.profileStore,
+    required this.ledgerStore,
+  });
 
   final ProfileStore profileStore;
+  final LedgerStore ledgerStore;
 
   @override
   State<MaliiiiiApp> createState() => _MaliiiiiAppState();
 }
 
 class _MaliiiiiAppState extends State<MaliiiiiApp> {
-  late final ProfileController _controller;
+  late final ProfileController _profileController;
+  late final LedgerController _ledgerController;
 
   @override
   void initState() {
     super.initState();
-    _controller = ProfileController(ProfileRepository(widget.profileStore));
-    _controller.init();
+    _profileController =
+        ProfileController(ProfileRepository(widget.profileStore));
+    _ledgerController = LedgerController(LedgerRepository(widget.ledgerStore));
+    _profileController.init();
+    _ledgerController.init();
   }
 
   ThemeMode _themeMode() => switch (
-      _controller.profile?.displayMode ?? DisplayMode.system) {
+      _profileController.profile?.displayMode ?? DisplayMode.system) {
         DisplayMode.system => ThemeMode.system,
         DisplayMode.light => ThemeMode.light,
         DisplayMode.dark => ThemeMode.dark,
       };
 
-  Widget _home() => switch (_controller.status) {
+  Widget _home() => switch (_profileController.status) {
         ProfileStatus.loading => const _SplashScreen(),
         ProfileStatus.needsOnboarding => const OnboardingScreen(),
         ProfileStatus.locked => const PinScreen(),
@@ -63,17 +80,22 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _controller,
+      listenable: Listenable.merge(
+        <Listenable>[_profileController, _ledgerController],
+      ),
       builder: (BuildContext context, _) {
         return ProfileScope(
-          controller: _controller,
-          child: MaterialApp(
-            title: Branding.appName,
-            debugShowCheckedModeBanner: false,
-            theme: buildAppTheme(Brightness.light),
-            darkTheme: buildAppTheme(Brightness.dark),
-            themeMode: _themeMode(),
-            home: _home(),
+          controller: _profileController,
+          child: LedgerScope(
+            controller: _ledgerController,
+            child: MaterialApp(
+              title: Branding.appName,
+              debugShowCheckedModeBanner: false,
+              theme: buildAppTheme(Brightness.light),
+              darkTheme: buildAppTheme(Brightness.dark),
+              themeMode: _themeMode(),
+              home: _home(),
+            ),
           ),
         );
       },

@@ -1,5 +1,18 @@
 import 'money.dart';
 
+Map<String, Object?> _jsonMap(Object? value) =>
+    (value as Map<Object?, Object?>?)?.cast<String, Object?>() ??
+    const <String, Object?>{};
+
+List<Object?> _jsonList(Object? value) =>
+    (value as List<Object?>?) ?? const <Object?>[];
+
+DateTime _parseDate(Object? value) =>
+    DateTime.tryParse(value as String? ?? '') ??
+    DateTime.fromMillisecondsSinceEpoch(0);
+
+Money _parseMoney(Object? value) => Money.fromJson(_jsonMap(value));
+
 enum AccountType {
   bank,
   card,
@@ -46,6 +59,23 @@ final class Account {
   final AccountType type;
   final Money openingBalance;
   final String notes;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'name': name,
+        'type': type.name,
+        'openingBalance': openingBalance.toJson(),
+        'notes': notes,
+      };
+
+  factory Account.fromJson(Map<String, Object?> json) => Account(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        type: AccountType.values.asNameMap()[json['type'] as String?] ??
+            AccountType.cash,
+        openingBalance: _parseMoney(json['openingBalance']),
+        notes: json['notes'] as String? ?? '',
+      );
 }
 
 final class LedgerTransaction {
@@ -70,6 +100,32 @@ final class LedgerTransaction {
   final String description;
   final String? referenceId;
   final String? transferId;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'accountId': accountId,
+        'amount': amount.toJson(),
+        'date': date.toIso8601String(),
+        'kind': kind.name,
+        'category': category,
+        'description': description,
+        'referenceId': referenceId,
+        'transferId': transferId,
+      };
+
+  factory LedgerTransaction.fromJson(Map<String, Object?> json) =>
+      LedgerTransaction(
+        id: json['id'] as String? ?? '',
+        accountId: json['accountId'] as String? ?? '',
+        amount: _parseMoney(json['amount']),
+        date: _parseDate(json['date']),
+        kind: TransactionKind.values.asNameMap()[json['kind'] as String?] ??
+            TransactionKind.expense,
+        category: json['category'] as String?,
+        description: json['description'] as String? ?? '',
+        referenceId: json['referenceId'] as String?,
+        transferId: json['transferId'] as String?,
+      );
 }
 
 final class Payment {
@@ -86,6 +142,22 @@ final class Payment {
   final DateTime paidDate;
   final String accountId;
   final String note;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'amount': amount.toJson(),
+        'paidDate': paidDate.toIso8601String(),
+        'accountId': accountId,
+        'note': note,
+      };
+
+  factory Payment.fromJson(Map<String, Object?> json) => Payment(
+        id: json['id'] as String? ?? '',
+        amount: _parseMoney(json['amount']),
+        paidDate: _parseDate(json['paidDate']),
+        accountId: json['accountId'] as String? ?? '',
+        note: json['note'] as String? ?? '',
+      );
 }
 
 final class Installment {
@@ -151,6 +223,45 @@ final class Installment {
         rescheduled: rescheduled,
         notes: notes,
       );
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'loanId': loanId,
+        'number': number,
+        'dueDate': dueDate.toIso8601String(),
+        'totalAmount': totalAmount.toJson(),
+        'principal': principal?.toJson(),
+        'interest': interest?.toJson(),
+        'fee': fee?.toJson(),
+        'payments': <Object?>[
+          for (final Payment payment in payments) payment.toJson(),
+        ],
+        'cancelled': cancelled,
+        'rescheduled': rescheduled,
+        'notes': notes,
+      };
+
+  factory Installment.fromJson(Map<String, Object?> json) {
+    Money? optionalMoney(Object? value) =>
+        value == null ? null : _parseMoney(value);
+    return Installment(
+      id: json['id'] as String? ?? '',
+      loanId: json['loanId'] as String? ?? '',
+      number: (json['number'] as num?)?.toInt() ?? 0,
+      dueDate: _parseDate(json['dueDate']),
+      totalAmount: _parseMoney(json['totalAmount']),
+      principal: optionalMoney(json['principal']),
+      interest: optionalMoney(json['interest']),
+      fee: optionalMoney(json['fee']),
+      payments: <Payment>[
+        for (final Object? entry in _jsonList(json['payments']))
+          Payment.fromJson(_jsonMap(entry)),
+      ],
+      cancelled: json['cancelled'] as bool? ?? false,
+      rescheduled: json['rescheduled'] as bool? ?? false,
+      notes: json['notes'] as String? ?? '',
+    );
+  }
 }
 
 final class Loan {
@@ -206,6 +317,43 @@ final class Loan {
             if (item.id == installment.id) installment else item,
         ],
       );
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'title': title,
+        'lender': lender,
+        'principal': principal.toJson(),
+        'receivedAmount': receivedAmount.toJson(),
+        'interest': interest.toJson(),
+        'fees': fees.toJson(),
+        'totalPayable': totalPayable.toJson(),
+        'startDate': startDate.toIso8601String(),
+        'status': status.name,
+        'notes': notes,
+        'installments': <Object?>[
+          for (final Installment installment in installments)
+            installment.toJson(),
+        ],
+      };
+
+  factory Loan.fromJson(Map<String, Object?> json) => Loan(
+        id: json['id'] as String? ?? '',
+        title: json['title'] as String? ?? '',
+        lender: json['lender'] as String? ?? '',
+        principal: _parseMoney(json['principal']),
+        receivedAmount: _parseMoney(json['receivedAmount']),
+        interest: _parseMoney(json['interest']),
+        fees: _parseMoney(json['fees']),
+        totalPayable: _parseMoney(json['totalPayable']),
+        startDate: _parseDate(json['startDate']),
+        status: LoanStatus.values.asNameMap()[json['status'] as String?] ??
+            LoanStatus.active,
+        notes: json['notes'] as String? ?? '',
+        installments: <Installment>[
+          for (final Object? entry in _jsonList(json['installments']))
+            Installment.fromJson(_jsonMap(entry)),
+        ],
+      );
 }
 
 final class Budget {
@@ -224,6 +372,24 @@ final class Budget {
   final DateTime startDate;
   final DateTime endDate;
   final String? category;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'name': name,
+        'amount': amount.toJson(),
+        'startDate': startDate.toIso8601String(),
+        'endDate': endDate.toIso8601String(),
+        'category': category,
+      };
+
+  factory Budget.fromJson(Map<String, Object?> json) => Budget(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        amount: _parseMoney(json['amount']),
+        startDate: _parseDate(json['startDate']),
+        endDate: _parseDate(json['endDate']),
+        category: json['category'] as String?,
+      );
 }
 
 final class Goal {
@@ -253,4 +419,25 @@ final class Goal {
   Money get remaining => (target - current).minorUnits < 0
       ? Money(0, currency: target.currency)
       : target - current;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'name': name,
+        'type': type.name,
+        'target': target.toJson(),
+        'current': current.toJson(),
+        'deadline': deadline.toIso8601String(),
+        'priority': priority,
+      };
+
+  factory Goal.fromJson(Map<String, Object?> json) => Goal(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        type: GoalType.values.asNameMap()[json['type'] as String?] ??
+            GoalType.custom,
+        target: _parseMoney(json['target']),
+        current: _parseMoney(json['current']),
+        deadline: _parseDate(json['deadline']),
+        priority: (json['priority'] as num?)?.toInt() ?? 3,
+      );
 }

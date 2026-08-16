@@ -95,6 +95,62 @@ final class FinancialLedger {
   final List<Budget> budgets;
   final List<Goal> goals;
 
+  Map<String, Object?> toJson() => <String, Object?>{
+        'schemaVersion': 1,
+        'accounts': <Object?>[
+          for (final Account account in accounts) account.toJson(),
+        ],
+        'transactions': <Object?>[
+          for (final LedgerTransaction transaction in transactions)
+            transaction.toJson(),
+        ],
+        'loans': <Object?>[
+          for (final Loan loan in loans) loan.toJson(),
+        ],
+        'budgets': <Object?>[
+          for (final Budget budget in budgets) budget.toJson(),
+        ],
+        'goals': <Object?>[
+          for (final Goal goal in goals) goal.toJson(),
+        ],
+      };
+
+  factory FinancialLedger.fromJson(Map<String, Object?> json) {
+    final Object? schema = json['schemaVersion'];
+    if (schema is num && schema.toInt() > 1) {
+      throw const FormatException('Unsupported ledger schema version.');
+    }
+    Map<String, Object?> entry(Object? value) =>
+        (value as Map<Object?, Object?>).cast<String, Object?>();
+    return FinancialLedger(
+      accounts: <Account>[
+        for (final Object? item
+            in (json['accounts'] as List<Object?>? ?? const <Object?>[]))
+          Account.fromJson(entry(item)),
+      ],
+      transactions: <LedgerTransaction>[
+        for (final Object? item
+            in (json['transactions'] as List<Object?>? ?? const <Object?>[]))
+          LedgerTransaction.fromJson(entry(item)),
+      ],
+      loans: <Loan>[
+        for (final Object? item
+            in (json['loans'] as List<Object?>? ?? const <Object?>[]))
+          Loan.fromJson(entry(item)),
+      ],
+      budgets: <Budget>[
+        for (final Object? item
+            in (json['budgets'] as List<Object?>? ?? const <Object?>[]))
+          Budget.fromJson(entry(item)),
+      ],
+      goals: <Goal>[
+        for (final Object? item
+            in (json['goals'] as List<Object?>? ?? const <Object?>[]))
+          Goal.fromJson(entry(item)),
+      ],
+    );
+  }
+
   FinancialLedger copyWith({
     List<Account>? accounts,
     List<LedgerTransaction>? transactions,

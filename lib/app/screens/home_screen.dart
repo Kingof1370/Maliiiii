@@ -5,6 +5,7 @@ import '../branding.dart';
 import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../localization/fa_strings.dart';
+import '../state/ledger_scope.dart';
 import '../state/profile_scope.dart';
 import '../theme/app_theme.dart';
 import '../widgets/developer_footer.dart';
@@ -19,13 +20,10 @@ import '../widgets/premium_card.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  /// دفترکل واقعی؛ در فاز پایگاه‌داده از Repository خوانده می‌شود.
-  static final FinancialLedger _ledger = const FinancialLedger();
-
-  static final DateTime _today = DateTime(2026, 8, 16);
-
   @override
   Widget build(BuildContext context) {
+    final FinancialLedger ledger = LedgerScope.of(context).ledger;
+    final DateTime today = DateTime.now();
     return PremiumBackdrop(
       child: SafeArea(
         child: ListView(
@@ -33,13 +31,13 @@ class HomeScreen extends StatelessWidget {
           children: <Widget>[
             const _Header(),
             const SizedBox(height: AppDimensions.spaceMd),
-            const _BalanceHeroCard(),
+            _BalanceHeroCard(ledger: ledger),
             const SizedBox(height: AppDimensions.spaceMd),
-            const _AvailableMoneyCard(),
+            _AvailableMoneyCard(ledger: ledger, today: today),
             const SizedBox(height: AppDimensions.spaceMd),
-            _MetricGrid(ledger: _ledger, today: _today),
+            _MetricGrid(ledger: ledger, today: today),
             const SizedBox(height: AppDimensions.spaceMd),
-            _HealthAndForecast(ledger: _ledger, today: _today),
+            _HealthAndForecast(ledger: ledger, today: today),
             const SizedBox(height: AppDimensions.spaceLg),
             const _QuickAddCard(),
             const SizedBox(height: AppDimensions.spaceLg),
@@ -121,7 +119,9 @@ class _HeaderAvatar extends StatelessWidget {
 }
 
 class _BalanceHeroCard extends StatelessWidget {
-  const _BalanceHeroCard();
+  const _BalanceHeroCard({required this.ledger});
+
+  final FinancialLedger ledger;
 
   @override
   Widget build(BuildContext context) {
@@ -162,10 +162,10 @@ class _BalanceHeroCard extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
                   child: Text(
-                    HomeScreen._ledger.totalBalance() == const Money(0)
+                    ledger.totalBalance() == const Money(0)
                         ? formatMinorUnits(0, suffix: '')
                         : formatMinorUnits(
-                            HomeScreen._ledger.totalBalance().minorUnits,
+                            ledger.totalBalance().minorUnits,
                             suffix: '',
                           ),
                     style: TextStyle(
@@ -278,7 +278,10 @@ class _HeroBadge extends StatelessWidget {
 }
 
 class _AvailableMoneyCard extends StatelessWidget {
-  const _AvailableMoneyCard();
+  const _AvailableMoneyCard({required this.ledger, required this.today});
+
+  final FinancialLedger ledger;
+  final DateTime today;
 
   @override
   Widget build(BuildContext context) {
@@ -313,8 +316,8 @@ class _AvailableMoneyCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   formatMinorUnits(
-                    HomeScreen._ledger
-                        .availableMoney(asOf: HomeScreen._today)
+                    ledger
+                        .availableMoney(asOf: today)
                         .minorUnits,
                     suffix: '',
                   ),

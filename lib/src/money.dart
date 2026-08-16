@@ -54,6 +54,16 @@ final class Money implements Comparable<Money> {
   @override
   String toString() => '$minorUnits $currency';
 
+  Map<String, Object?> toJson() => <String, Object?>{
+        'minor': minorUnits,
+        'currency': currency,
+      };
+
+  factory Money.fromJson(Map<String, Object?> json) => Money(
+        (json['minor'] as num?)?.toInt() ?? 0,
+        currency: json['currency'] as String? ?? 'IRR',
+      );
+
   void _requireSameCurrency(Money other) {
     if (currency != other.currency) {
       throw ArgumentError(

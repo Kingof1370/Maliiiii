@@ -70,3 +70,18 @@
   انتخاب روشن/تاریک از پروفایل خوانده می‌شود و تغییرش پایدار است.
 - واحد پول (تومان/ریال) در پروفایل ذخیره می‌شود؛ منطق مالی همچنان با واحد
   صحیح کوچک کار می‌کند و این enum فقط نمایش را تعیین می‌کند.
+
+## پایگاه داده و Repository (P004)
+
+- مدل‌های دامنه همگی `toJson`/`fromJson` دارند:
+  `Money`, `Account`, `LedgerTransaction`, `Payment`, `Installment`, `Loan`,
+  `Budget`, `Goal` و `FinancialLedger` (با `schemaVersion` و رد نسخهٔ ناشناخته).
+- `lib/app/data/ledger_store.dart`: مرز `LedgerStore` + پیاده‌سازی فایل
+  (`FileLedgerStore`) با نوشتن اتمیک (فایل موقت + rename)؛ فایل خراب یا
+  نسخهٔ ناشناخته `null` برمی‌گرداند نه خطا.
+- `lib/app/data/ledger_repository.dart`: کش حافظه‌ای.
+- `lib/app/state/ledger_controller.dart`: `LedgerController` با
+  `commit(mutation)` — تنها مسیر تغییر دفترکل؛ نتیجهٔ موتور در همان لحظه
+  ذخیره و به UI اعلام می‌شود. `LedgerScope` دسترسی صفحات را فراهم می‌کند.
+- داشبورد (HomeScreen) دفترکل را از `LedgerScope` می‌خواند؛ هیچ عدد ثابتی
+  در UI وجود ندارد. فایل ذخیره‌سازی: `ledger.json` در Documents.
