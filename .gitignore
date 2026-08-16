@@ -7,4 +7,9 @@ coverage/
 doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
-.metadata
+.metadataandroid/local.properties
+**/local.properties
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
