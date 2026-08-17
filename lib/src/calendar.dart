@@ -1,9 +1,36 @@
+/// تقویم شمسی (جلالی): تبدیل دقیق میلادی ↔ شمسی با پشتیبانی از سال کبیسه.
 final class JalaliDate {
   const JalaliDate(this.year, this.month, this.day);
 
   final int year;
   final int month;
   final int day;
+
+  static const List<String> monthNames = <String>[
+    'فروردین',
+    'اردیبهشت',
+    'خرداد',
+    'تیر',
+    'مرداد',
+    'شهریور',
+    'مهر',
+    'آبان',
+    'آذر',
+    'دی',
+    'بهمن',
+    'اسفند',
+  ];
+
+  /// هفتهٔ شمسی از شنبه شروع می‌شود.
+  static const List<String> weekdayNames = <String>[
+    'شنبه',
+    'یکشنبه',
+    'دوشنبه',
+    'سه‌شنبه',
+    'چهارشنبه',
+    'پنجشنبه',
+    'جمعه',
+  ];
 
   DateTime toGregorian() {
     final jy = year + 1595;
@@ -27,7 +54,20 @@ final class JalaliDate {
       days = (days - 1) % 365;
     }
     var gd = days + 1;
-    final monthLengths = <int>[31, _isGregorianLeap(gy) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    final monthLengths = <int>[
+      31,
+      _isGregorianLeap(gy) ? 29 : 28,
+      31,
+      30,
+      31,
+      30,
+      31,
+      31,
+      30,
+      31,
+      30,
+      31,
+    ];
     var gm = 0;
     while (gm < monthLengths.length && gd > monthLengths[gm]) {
       gd -= monthLengths[gm];
@@ -82,6 +122,44 @@ final class JalaliDate {
 
   static bool _isGregorianLeap(int year) =>
       (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+
+  static JalaliDate fromDateTime(DateTime date) => fromGregorian(date);
+
+  static JalaliDate today() => fromDateTime(DateTime.now());
+
+  /// تعداد روزهای ماه شمسی؛ شش ماه اول ۳۱، پنج ماه بعد ۳۰ و اسفند
+  /// بسته به کبیسه ۲۹ یا ۳۰ روز است.
+  static int daysInMonth(int year, int month) {
+    if (month < 1 || month > 12) {
+      throw RangeError.range(month, 1, 12, 'month');
+    }
+    if (month <= 6) return 31;
+    if (month <= 11) return 30;
+    // اسفند: فاصلهٔ شروع اسفند تا شروع سال بعد.
+    final DateTime start = JalaliDate(year, 12, 1).toGregorian();
+    final DateTime nextYear = JalaliDate(year + 1, 1, 1).toGregorian();
+    return nextYear.difference(start).inDays;
+  }
+
+  static bool isLeapYear(int year) => daysInMonth(year, 12) == 30;
+
+  /// جابه‌جایی در ماه‌های شمسی (خنثی نسبت به کبیسه).
+  JalaliDate addMonths(int months) {
+    final int total = year * 12 + (month - 1) + months;
+    final int targetYear = total ~/ 12;
+    final int targetMonth = total % 12 + 1;
+    final int maxDay = daysInMonth(targetYear, targetMonth);
+    return JalaliDate(targetYear, targetMonth, day > maxDay ? maxDay : day);
+  }
+
+  /// ایندکس روز هفته با شروع از شنبه: شنبه = ۰ ... جمعه = ۶.
+  int get weekdayIndex => (toGregorian().weekday + 1) % 7;
+
+  String get monthName => monthNames[month - 1];
+  String get weekdayName => weekdayNames[weekdayIndex];
+
+  bool isSameDay(JalaliDate other) =>
+      year == other.year && month == other.month && day == other.day;
 
   @override
   String toString() =>

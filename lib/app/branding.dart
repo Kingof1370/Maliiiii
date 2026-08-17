@@ -8,6 +8,6 @@ abstract final class Branding {
   static const String tagline = 'دستیار مالی شخصی، آفلاین و خصوصی';
   static const String developerName = 'علی بهمنی';
   static const String developerTitle = 'توسعه‌دهنده';
-  static const String version = '0.5.0';
+  static const String version = '0.6.0';
   static const String defaultCurrency = 'IRT';
 }
