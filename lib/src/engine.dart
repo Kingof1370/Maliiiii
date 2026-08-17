@@ -327,6 +327,11 @@ final class FinancialLedger {
         'Transfer accounts must be different.',
       );
     }
+    if (accounts.every((item) => item.id != toAccountId)) {
+      throw FinancialValidationException(
+        'Transfer destination account not found.',
+      );
+    }
     if (accountBalance(fromAccountId) < amount) {
       throw FinancialValidationException(
         'Insufficient balance for transfer.',
@@ -351,6 +356,17 @@ final class FinancialLedger {
       transferId: transferId,
     );
     return copyWith(transactions: [...transactions, outgoing, incoming]);
+  }
+
+  FinancialLedger createAccount({
+    required Account account,
+  }) {
+    if (accounts.any((item) => item.id == account.id)) {
+      throw FinancialValidationException(
+        'Account already exists: ${account.id}',
+      );
+    }
+    return copyWith(accounts: [...accounts, account]);
   }
 
   PaymentReceipt recordInstallmentPayment({

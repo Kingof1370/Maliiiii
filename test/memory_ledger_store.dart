@@ -7,6 +7,8 @@ class MemoryLedgerStore implements LedgerStore {
 
   FinancialLedger? _ledger;
 
+  FinancialLedger? get ledger => _ledger;
+
   @override
   Future<FinancialLedger?> load() async => _ledger;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../localization/fa_strings.dart';
+import '../screens/accounts_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/loans_screen.dart';
 import '../screens/reports_screen.dart';
@@ -21,6 +22,7 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final List<Widget> pages = <Widget>[
       const HomeScreen(),
+      const AccountsScreen(),
       const ReportsScreen(),
       const LoansScreen(),
       const SettingsScreen(),
@@ -36,6 +38,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded),
             label: 'خانه',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+            label: 'حساب‌ها',
           ),
           NavigationDestination(
             icon: Icon(Icons.insights_outlined),

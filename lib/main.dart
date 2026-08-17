@@ -12,6 +12,8 @@ import 'app/design/app_colors.dart';
 import 'app/screens/onboarding_screen.dart';
 import 'app/screens/pin_screen.dart';
 import 'app/shell/main_shell.dart';
+import 'app/state/account_controller.dart';
+import 'app/state/account_scope.dart';
 import 'app/state/ledger_controller.dart';
 import 'app/state/ledger_scope.dart';
 import 'app/state/profile_controller.dart';
@@ -52,6 +54,7 @@ class MaliiiiiApp extends StatefulWidget {
 class _MaliiiiiAppState extends State<MaliiiiiApp> {
   late final ProfileController _profileController;
   late final LedgerController _ledgerController;
+  late final AccountController _accountController;
 
   @override
   void initState() {
@@ -59,6 +62,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
     _profileController =
         ProfileController(ProfileRepository(widget.profileStore));
     _ledgerController = LedgerController(LedgerRepository(widget.ledgerStore));
+    _accountController = AccountController(_ledgerController);
     _profileController.init();
     _ledgerController.init();
   }
@@ -88,13 +92,16 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
           controller: _profileController,
           child: LedgerScope(
             controller: _ledgerController,
-            child: MaterialApp(
-              title: Branding.appName,
-              debugShowCheckedModeBanner: false,
-              theme: buildAppTheme(Brightness.light),
-              darkTheme: buildAppTheme(Brightness.dark),
-              themeMode: _themeMode(),
-              home: _home(),
+            child: AccountScope(
+              controller: _accountController,
+              child: MaterialApp(
+                title: Branding.appName,
+                debugShowCheckedModeBanner: false,
+                theme: buildAppTheme(Brightness.light),
+                darkTheme: buildAppTheme(Brightness.dark),
+                themeMode: _themeMode(),
+                home: _home(),
+              ),
             ),
           ),
         );

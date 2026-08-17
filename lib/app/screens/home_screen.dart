@@ -5,6 +5,8 @@ import '../branding.dart';
 import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../localization/fa_strings.dart';
+import '../screens/add_transaction_screen.dart';
+import '../screens/add_transfer_screen.dart';
 import '../state/ledger_scope.dart';
 import '../state/profile_scope.dart';
 import '../theme/app_theme.dart';
@@ -612,9 +614,40 @@ class _QuickAddCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('ثبت اولین هزینه'),
+                  key: const Key('quick-add-expense'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AddTransactionScreen(income: false),
+                    ),
+                  ),
+                  icon: const Icon(Icons.remove_circle_outline),
+                  label: const Text('ثبت هزینه'),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.spaceSm),
+              Expanded(
+                child: FilledButton.tonalIcon(
+                  key: const Key('quick-add-income'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AddTransactionScreen(income: true),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('درآمد'),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.spaceSm),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('quick-add-transfer'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AddTransferScreen(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('انتقال'),
                 ),
               ),
             ],
