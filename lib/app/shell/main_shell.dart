@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/fa_strings.dart';
 import '../screens/accounts_screen.dart';
+import '../screens/budgets_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/loans_screen.dart';
@@ -25,6 +26,7 @@ class _MainShellState extends State<MainShell> {
       const HomeScreen(),
       const AccountsScreen(),
       const CalendarScreen(),
+      const BudgetsScreen(),
       const ReportsScreen(),
       const LoansScreen(),
       const SettingsScreen(),
@@ -50,6 +52,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month_rounded),
             label: 'تقویم',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.savings_outlined),
+            selectedIcon: Icon(Icons.savings_rounded),
+            label: 'بودجه',
           ),
           NavigationDestination(
             icon: Icon(Icons.insights_outlined),

@@ -471,3 +471,92 @@ final class Goal {
         priority: (json['priority'] as num?)?.toInt() ?? 3,
       );
 }
+
+/// بازهٔ تکرار یک تراکنش تکرارشونده.
+enum RecurringFrequency { daily, weekly, monthly, yearly }
+
+/// تراکنش تکرارشونده (درآمد یا هزینه) که می‌تواند به‌صورت خودکار تا امروز
+/// در دفترکل ثبت شود. `lastGenerated` از دوباره‌شماری جلوگیری می‌کند.
+final class RecurringTransaction {
+  const RecurringTransaction({
+    required this.id,
+    required this.name,
+    required this.amount,
+    required this.kind,
+    required this.accountId,
+    required this.frequency,
+    required this.startDate,
+    this.category,
+    this.endDate,
+    this.lastGenerated,
+    this.active = true,
+  });
+
+  final String id;
+  final String name;
+  final Money amount;
+  final TransactionKind kind;
+  final String accountId;
+  final RecurringFrequency frequency;
+  final DateTime startDate;
+  final String? category;
+  final DateTime? endDate;
+  final DateTime? lastGenerated;
+  final bool active;
+
+  bool get isIncome => kind == TransactionKind.income;
+
+  RecurringTransaction copyWith({
+    DateTime? lastGenerated,
+    bool? active,
+  }) =>
+      RecurringTransaction(
+        id: id,
+        name: name,
+        amount: amount,
+        kind: kind,
+        accountId: accountId,
+        frequency: frequency,
+        startDate: startDate,
+        category: category,
+        endDate: endDate,
+        lastGenerated: lastGenerated ?? this.lastGenerated,
+        active: active ?? this.active,
+      );
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'name': name,
+        'amount': amount.toJson(),
+        'kind': kind.name,
+        'accountId': accountId,
+        'frequency': frequency.name,
+        'startDate': startDate.toIso8601String(),
+        'category': category,
+        'endDate': endDate?.toIso8601String(),
+        'lastGenerated': lastGenerated?.toIso8601String(),
+        'active': active,
+      };
+
+  factory RecurringTransaction.fromJson(Map<String, Object?> json) =>
+      RecurringTransaction(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        amount: _parseMoney(json['amount']),
+        kind: TransactionKind.values.asNameMap()[json['kind'] as String?] ??
+            TransactionKind.expense,
+        accountId: json['accountId'] as String? ?? '',
+        frequency: RecurringFrequency.values
+                .asNameMap()[json['frequency'] as String?] ??
+            RecurringFrequency.monthly,
+        startDate: _parseDate(json['startDate']),
+        category: json['category'] as String?,
+        endDate: json['endDate'] == null
+            ? null
+            : _parseDate(json['endDate']),
+        lastGenerated: json['lastGenerated'] == null
+            ? null
+            : _parseDate(json['lastGenerated']),
+        active: json['active'] as bool? ?? true,
+      );
+}

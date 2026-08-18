@@ -87,6 +87,7 @@ final class FinancialLedger {
     this.loans = const [],
     this.budgets = const [],
     this.goals = const [],
+    this.recurrings = const [],
   });
 
   final List<Account> accounts;
@@ -94,6 +95,7 @@ final class FinancialLedger {
   final List<Loan> loans;
   final List<Budget> budgets;
   final List<Goal> goals;
+  final List<RecurringTransaction> recurrings;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'schemaVersion': 1,
@@ -112,6 +114,10 @@ final class FinancialLedger {
         ],
         'goals': <Object?>[
           for (final Goal goal in goals) goal.toJson(),
+        ],
+        'recurrings': <Object?>[
+          for (final RecurringTransaction recurring in recurrings)
+            recurring.toJson(),
         ],
       };
 
@@ -148,6 +154,11 @@ final class FinancialLedger {
             in (json['goals'] as List<Object?>? ?? const <Object?>[]))
           Goal.fromJson(entry(item)),
       ],
+      recurrings: <RecurringTransaction>[
+        for (final Object? item
+            in (json['recurrings'] as List<Object?>? ?? const <Object?>[]))
+          RecurringTransaction.fromJson(entry(item)),
+      ],
     );
   }
 
@@ -157,6 +168,7 @@ final class FinancialLedger {
     List<Loan>? loans,
     List<Budget>? budgets,
     List<Goal>? goals,
+    List<RecurringTransaction>? recurrings,
   }) =>
       FinancialLedger(
         accounts: accounts ?? this.accounts,
@@ -164,6 +176,7 @@ final class FinancialLedger {
         loans: loans ?? this.loans,
         budgets: budgets ?? this.budgets,
         goals: goals ?? this.goals,
+        recurrings: recurrings ?? this.recurrings,
       );
 
   Money accountBalance(String accountId) {
@@ -506,6 +519,187 @@ final class FinancialLedger {
             if (item.id == updated.id) updated else item,
         ],
       );
+
+  FinancialLedger createBudget({required Budget budget}) {
+    if (budgets.any((item) => item.id == budget.id)) {
+      throw FinancialValidationException('Budget already exists: ${budget.id}');
+    }
+    if (!budget.amount.isPositive) {
+      throw FinancialValidationException('Budget amount must be positive.');
+    }
+    if (budget.endDate.isBefore(budget.startDate)) {
+      throw FinancialValidationException(
+        'Budget end date must not be before start date.',
+      );
+    }
+    return copyWith(budgets: [...budgets, budget]);
+  }
+
+  FinancialLedger deleteBudget({required String budgetId}) {
+    if (budgets.every((item) => item.id != budgetId)) {
+      throw FinancialValidationException('Budget not found: $budgetId');
+    }
+    return copyWith(
+      budgets: [for (final item in budgets) if (item.id != budgetId) item],
+    );
+  }
+
+  /// هزینهٔ واقعی داخل بازهٔ بودجه (تا [asOf]); فقط هزینه‌ها (نه قسط) با
+  /// تطبیق دسته؛ بودجهٔ بدون دسته، همهٔ هزینه‌ها را پوشش می‌دهد.
+  Money budgetSpent(Budget budget, {DateTime? asOf}) {
+    final DateTime effectiveAsOf = asOf ?? DateTime.now();
+    final DateTime effectiveEnd = budget.endDate.isBefore(effectiveAsOf)
+        ? budget.endDate
+        : effectiveAsOf;
+    return transactions
+        .where((item) => item.kind == TransactionKind.expense)
+        .where((item) => !item.date.isBefore(budget.startDate))
+        .where((item) => !item.date.isAfter(effectiveEnd))
+        .where(
+          (item) =>
+              budget.category == null || item.category == budget.category,
+        )
+        .fold(const Money(0), (sum, item) => sum + item.amount);
+  }
+
+  FinancialLedger createRecurring({required RecurringTransaction recurring}) {
+    if (recurrings.any((item) => item.id == recurring.id)) {
+      throw FinancialValidationException(
+        'Recurring already exists: ${recurring.id}',
+      );
+    }
+    if (recurring.kind != TransactionKind.income &&
+        recurring.kind != TransactionKind.expense) {
+      throw FinancialValidationException(
+        'Recurring kind must be income or expense.',
+      );
+    }
+    if (!recurring.amount.isPositive) {
+      throw FinancialValidationException(
+        'Recurring amount must be positive.',
+      );
+    }
+    if (accounts.every((item) => item.id != recurring.accountId)) {
+      throw FinancialValidationException(
+        'Account not found: ${recurring.accountId}',
+      );
+    }
+    return copyWith(recurrings: [...recurrings, recurring]);
+  }
+
+  FinancialLedger toggleRecurring({
+    required String recurringId,
+    required bool active,
+  }) {
+    _recurringOrThrow(recurringId);
+    return copyWith(
+      recurrings: [
+        for (final item in recurrings)
+          if (item.id == recurringId) item.copyWith(active: active) else item,
+      ],
+    );
+  }
+
+  FinancialLedger deleteRecurring({required String recurringId}) {
+    _recurringOrThrow(recurringId);
+    return copyWith(
+      recurrings: [
+        for (final item in recurrings)
+          if (item.id != recurringId) item,
+      ],
+    );
+  }
+
+  RecurringTransaction _recurringOrThrow(String recurringId) =>
+      recurrings.firstWhere(
+        (item) => item.id == recurringId,
+        orElse: () => throw FinancialValidationException(
+          'Recurring not found: $recurringId',
+        ),
+      );
+
+  /// به‌روزرسانی تراکنش‌های تکرارشوندهٔ سررسیدشده تا [asOf]: برای هر مورد
+  /// فعال، از آخرین تولید (یا تاریخ شروع) تا [asOf] تراکنش ساخته می‌شود و
+  /// `lastGenerated` جلو می‌رود؛ فراخوانی دوباره چیزی تکراری نمی‌سازد.
+  FinancialLedger materializeDueRecurrings({
+    required DateTime asOf,
+    String idPrefix = 'rec',
+  }) {
+    var changed = false;
+    final List<RecurringTransaction> updated = <RecurringTransaction>[];
+    final List<LedgerTransaction> generated = <LedgerTransaction>[];
+    for (final RecurringTransaction recurring in recurrings) {
+      if (!recurring.active || recurring.startDate.isAfter(asOf)) {
+        updated.add(recurring);
+        continue;
+      }
+      DateTime? last = recurring.lastGenerated;
+      // از «روز بعد از آخرین تولید» ادامه می‌دهیم تا فراخوانی دوباره در همان
+      // asOf تراکنش تکراری نسازد (یکتاسازی).
+      DateTime next = last == null
+          ? recurring.startDate
+          : _recurringNext(last, recurring.frequency);
+      var occurrence = 0;
+      if (last != null) {
+        var cursor = recurring.startDate;
+        while (!cursor.isAfter(last)) {
+          occurrence++;
+          cursor = _recurringNext(cursor, recurring.frequency);
+        }
+      }
+      while (!next.isAfter(asOf) &&
+          (recurring.endDate == null || !next.isAfter(recurring.endDate!))) {
+        occurrence++;
+        generated.add(
+          LedgerTransaction(
+            id: '$idPrefix-${recurring.id}-$occurrence',
+            accountId: recurring.accountId,
+            amount: recurring.amount,
+            date: next,
+            kind: recurring.kind,
+            category: recurring.category,
+            description: recurring.name,
+          ),
+        );
+        last = next;
+        next = _recurringNext(next, recurring.frequency);
+        if (occurrence > 2000) break;
+      }
+      final RecurringTransaction withLast =
+          recurring.copyWith(lastGenerated: last);
+      if (withLast.lastGenerated != recurring.lastGenerated) changed = true;
+      updated.add(withLast);
+    }
+    if (generated.isEmpty && !changed) return this;
+    return copyWith(
+      recurrings: updated,
+      transactions: [...transactions, ...generated],
+    );
+  }
+
+  DateTime _recurringNext(DateTime date, RecurringFrequency frequency) {
+    switch (frequency) {
+      case RecurringFrequency.daily:
+        return date.add(const Duration(days: 1));
+      case RecurringFrequency.weekly:
+        return date.add(const Duration(days: 7));
+      case RecurringFrequency.monthly:
+        final int daysInTarget = DateTime(date.year, date.month + 2, 0).day;
+        return DateTime(
+          date.year,
+          date.month + 1,
+          date.day > daysInTarget ? daysInTarget : date.day,
+        );
+      case RecurringFrequency.yearly:
+        final int daysInTarget =
+            DateTime(date.year + 1, date.month + 1, 0).day;
+        return DateTime(
+          date.year + 1,
+          date.month,
+          date.day > daysInTarget ? daysInTarget : date.day,
+        );
+    }
+  }
 
   PaymentReceipt recordInstallmentPayment({
     required String paymentId,

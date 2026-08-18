@@ -14,6 +14,8 @@ import 'app/screens/pin_screen.dart';
 import 'app/shell/main_shell.dart';
 import 'app/state/account_controller.dart';
 import 'app/state/account_scope.dart';
+import 'app/state/budget_controller.dart';
+import 'app/state/budget_scope.dart';
 import 'app/state/ledger_controller.dart';
 import 'app/state/ledger_scope.dart';
 import 'app/state/loan_controller.dart';
@@ -58,6 +60,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
   late final LedgerController _ledgerController;
   late final AccountController _accountController;
   late final LoanController _loanController;
+  late final BudgetController _budgetController;
 
   @override
   void initState() {
@@ -67,6 +70,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
     _ledgerController = LedgerController(LedgerRepository(widget.ledgerStore));
     _accountController = AccountController(_ledgerController);
     _loanController = LoanController(_ledgerController);
+    _budgetController = BudgetController(_ledgerController);
     _profileController.init();
     _ledgerController.init();
   }
@@ -96,9 +100,11 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
           controller: _profileController,
           child: LedgerScope(
             controller: _ledgerController,
-            child: LoanScope(
-              controller: _loanController,
-              child: AccountScope(
+            child: BudgetScope(
+              controller: _budgetController,
+              child: LoanScope(
+                controller: _loanController,
+                child: AccountScope(
                 controller: _accountController,
                 child: MaterialApp(
                   title: Branding.appName,
@@ -111,7 +117,8 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }
