@@ -318,6 +318,36 @@ final class Loan {
         ],
       );
 
+  Loan copyWithInstallments(List<Installment> installments) => Loan(
+        id: id,
+        title: title,
+        lender: lender,
+        principal: principal,
+        receivedAmount: receivedAmount,
+        interest: interest,
+        fees: fees,
+        totalPayable: totalPayable,
+        startDate: startDate,
+        status: status,
+        notes: notes,
+        installments: installments,
+      );
+
+  Loan copyWithStatus(LoanStatus status) => Loan(
+        id: id,
+        title: title,
+        lender: lender,
+        principal: principal,
+        receivedAmount: receivedAmount,
+        interest: interest,
+        fees: fees,
+        totalPayable: totalPayable,
+        startDate: startDate,
+        status: status,
+        notes: notes,
+        installments: installments,
+      );
+
   Map<String, Object?> toJson() => <String, Object?>{
         'id': id,
         'title': title,

@@ -16,6 +16,8 @@ import 'app/state/account_controller.dart';
 import 'app/state/account_scope.dart';
 import 'app/state/ledger_controller.dart';
 import 'app/state/ledger_scope.dart';
+import 'app/state/loan_controller.dart';
+import 'app/state/loan_scope.dart';
 import 'app/state/profile_controller.dart';
 import 'app/state/profile_scope.dart';
 import 'app/theme/app_theme.dart';
@@ -55,6 +57,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
   late final ProfileController _profileController;
   late final LedgerController _ledgerController;
   late final AccountController _accountController;
+  late final LoanController _loanController;
 
   @override
   void initState() {
@@ -63,6 +66,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
         ProfileController(ProfileRepository(widget.profileStore));
     _ledgerController = LedgerController(LedgerRepository(widget.ledgerStore));
     _accountController = AccountController(_ledgerController);
+    _loanController = LoanController(_ledgerController);
     _profileController.init();
     _ledgerController.init();
   }
@@ -92,15 +96,18 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
           controller: _profileController,
           child: LedgerScope(
             controller: _ledgerController,
-            child: AccountScope(
-              controller: _accountController,
-              child: MaterialApp(
-                title: Branding.appName,
-                debugShowCheckedModeBanner: false,
-                theme: buildAppTheme(Brightness.light),
-                darkTheme: buildAppTheme(Brightness.dark),
-                themeMode: _themeMode(),
-                home: _home(),
+            child: LoanScope(
+              controller: _loanController,
+              child: AccountScope(
+                controller: _accountController,
+                child: MaterialApp(
+                  title: Branding.appName,
+                  debugShowCheckedModeBanner: false,
+                  theme: buildAppTheme(Brightness.light),
+                  darkTheme: buildAppTheme(Brightness.dark),
+                  themeMode: _themeMode(),
+                  home: _home(),
+                ),
               ),
             ),
           ),

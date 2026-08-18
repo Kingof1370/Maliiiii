@@ -369,6 +369,144 @@ final class FinancialLedger {
     return copyWith(accounts: [...accounts, account]);
   }
 
+  FinancialLedger createLoan({required Loan loan}) {
+    if (loans.any((item) => item.id == loan.id)) {
+      throw FinancialValidationException(
+        'Loan already exists: ${loan.id}',
+      );
+    }
+    return copyWith(loans: [...loans, loan]);
+  }
+
+  /// افزودن قسط (نامنظم) به وام؛ چند قسط در یک روز مجاز است و شناسهٔ قسط‌ها
+  /// باید یکتا باشد.
+  FinancialLedger addInstallment({
+    required String loanId,
+    required Installment installment,
+  }) {
+    final Loan loan = _loanOrThrow(loanId);
+    if (loan.installments.any((item) => item.id == installment.id)) {
+      throw FinancialValidationException(
+        'Installment already exists: ${installment.id}',
+      );
+    }
+    if (installment.loanId != loanId) {
+      throw FinancialValidationException(
+        'Installment loan id does not match.',
+      );
+    }
+    if (!installment.totalAmount.isPositive) {
+      throw FinancialValidationException(
+        'Installment total must be positive.',
+      );
+    }
+    return _replaceLoan(
+      loan.copyWithInstallments([
+        ...loan.installments,
+        installment,
+      ]),
+    );
+  }
+
+  /// تغییر سررسید قسط؛ با توافق طرفین انجام می‌شود و پرچم
+  /// «تعویض‌شده» روی قسط ثبت می‌شود.
+  FinancialLedger rescheduleInstallment({
+    required String loanId,
+    required String installmentId,
+    required DateTime newDueDate,
+  }) {
+    final Loan loan = _loanOrThrow(loanId);
+    final Installment installment = loan.installments.firstWhere(
+      (item) => item.id == installmentId,
+      orElse: () => throw FinancialValidationException(
+        'Installment not found.',
+      ),
+    );
+    if (installment.cancelled) {
+      throw FinancialValidationException(
+        'Cancelled installment cannot be rescheduled.',
+      );
+    }
+    final Installment updated = Installment(
+      id: installment.id,
+      loanId: installment.loanId,
+      number: installment.number,
+      dueDate: newDueDate,
+      totalAmount: installment.totalAmount,
+      principal: installment.principal,
+      interest: installment.interest,
+      fee: installment.fee,
+      payments: installment.payments,
+      cancelled: installment.cancelled,
+      rescheduled: true,
+      notes: installment.notes,
+    );
+    return _replaceLoan(loan.withInstallment(updated));
+  }
+
+  /// لغو قسط؛ فقط وقتی پرداختی نداشته باشد مجاز است.
+  FinancialLedger cancelInstallment({
+    required String loanId,
+    required String installmentId,
+  }) {
+    final Loan loan = _loanOrThrow(loanId);
+    final Installment installment = loan.installments.firstWhere(
+      (item) => item.id == installmentId,
+      orElse: () => throw FinancialValidationException(
+        'Installment not found.',
+      ),
+    );
+    if (installment.paidAmount.isPositive) {
+      throw FinancialValidationException(
+        'Paid installment cannot be cancelled.',
+      );
+    }
+    final Installment updated = Installment(
+      id: installment.id,
+      loanId: installment.loanId,
+      number: installment.number,
+      dueDate: installment.dueDate,
+      totalAmount: installment.totalAmount,
+      principal: installment.principal,
+      interest: installment.interest,
+      fee: installment.fee,
+      payments: installment.payments,
+      cancelled: true,
+      rescheduled: installment.rescheduled,
+      notes: installment.notes,
+    );
+    return _replaceLoan(loan.withInstallment(updated));
+  }
+
+  /// تسویهٔ وام: فقط وقتی باقی‌مانده صفر باشد.
+  FinancialLedger completeLoan({required String loanId}) {
+    final Loan loan = _loanOrThrow(loanId);
+    if (!loan.remainingAmount.isZero) {
+      throw FinancialValidationException(
+        'Loan has remaining balance.',
+      );
+    }
+    return _replaceLoan(loan.copyWithStatus(LoanStatus.paidOff));
+  }
+
+  /// بایگانی وام (بدون تغییر در موجودی‌ها).
+  FinancialLedger archiveLoan({required String loanId}) {
+    final Loan loan = _loanOrThrow(loanId);
+    return _replaceLoan(loan.copyWithStatus(LoanStatus.archived));
+  }
+
+  Loan _loanOrThrow(String loanId) => loans.firstWhere(
+        (item) => item.id == loanId,
+        orElse: () => throw FinancialValidationException('Loan not found.'),
+      );
+
+  FinancialLedger _replaceLoan(Loan updated) => copyWith(
+        loans: [
+          for (final item in loans)
+            if (item.id == updated.id) updated else item,
+        ],
+      );
+
   PaymentReceipt recordInstallmentPayment({
     required String paymentId,
     required String ledgerEntryId,
