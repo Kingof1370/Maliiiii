@@ -25,6 +25,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final FinancialLedger ledger = LedgerScope.of(context).ledger;
+    final UserProfile? profile = ProfileScope.of(context).profile;
     final DateTime today = DateTime.now();
     return PremiumBackdrop(
       child: SafeArea(
@@ -40,6 +41,8 @@ class HomeScreen extends StatelessWidget {
             _MetricGrid(ledger: ledger, today: today),
             const SizedBox(height: AppDimensions.spaceMd),
             _HealthAndForecast(ledger: ledger, today: today),
+            const SizedBox(height: AppDimensions.spaceMd),
+            _NotificationsCard(ledger: ledger, profile: profile, today: today),
             const SizedBox(height: AppDimensions.spaceLg),
             const _QuickAddCard(),
             const SizedBox(height: AppDimensions.spaceLg),
@@ -657,6 +660,162 @@ class _QuickAddCard extends StatelessWidget {
             FaStrings.foundationPhaseNote,
             style: TextStyle(color: palette.textMuted, fontSize: 11),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// کارت اعلان‌های هوشمند: از موتور خالص [buildNotifications] با لحن پروفایل
+/// ساخته می‌شود؛ داده‌ها همیشه از دفترکل واقعی خوانده می‌شوند.
+class _NotificationsCard extends StatelessWidget {
+  const _NotificationsCard({
+    required this.ledger,
+    required this.profile,
+    required this.today,
+  });
+
+  final FinancialLedger ledger;
+  final UserProfile? profile;
+  final DateTime today;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.appPalette;
+    final UserProfile? current = profile;
+    if (current == null) return const SizedBox.shrink();
+    final List<AppNotification> all = buildNotifications(
+      ledger: ledger,
+      profile: current,
+      asOf: today,
+    );
+    if (all.isEmpty) {
+      return PremiumCard(
+        elevation: PremiumElevation.flat,
+        child: Row(
+          children: <Widget>[
+            Icon(Icons.verified_rounded, color: palette.positive),
+            const SizedBox(width: AppDimensions.spaceSm + 4),
+            Expanded(
+              child: Text(
+                'همه‌چیز رو به راه است 👌',
+                style: TextStyle(
+                  color: palette.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final List<AppNotification> shown = all.take(4).toList();
+    return PremiumCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.notifications_active_rounded,
+                  color: palette.gold, size: 20),
+              const SizedBox(width: AppDimensions.spaceSm),
+              Text(
+                'اعلان‌های هوشمند',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.spaceSm,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.goldSoft,
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.radiusPill),
+                ),
+                child: Text(
+                  toPersianDigits(all.length),
+                  style: TextStyle(
+                    color: palette.gold,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spaceSm + 4),
+          for (final AppNotification n in shown) ...<Widget>[
+            _NotificationTile(notification: n),
+            if (n != shown.last) Divider(color: palette.divider, height: 1),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({required this.notification});
+
+  final AppNotification notification;
+
+  IconData _icon(NotificationPriority priority) => switch (priority) {
+        NotificationPriority.urgent => Icons.error_rounded,
+        NotificationPriority.high => Icons.warning_amber_rounded,
+        NotificationPriority.normal => Icons.info_outline_rounded,
+        NotificationPriority.low => Icons.notifications_none_rounded,
+      };
+
+  Color _color(AppPalette palette, NotificationPriority priority) =>
+      switch (priority) {
+        NotificationPriority.urgent => palette.danger,
+        NotificationPriority.high => palette.warning,
+        NotificationPriority.normal => palette.info,
+        NotificationPriority.low => palette.textMuted,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.appPalette;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.spaceSm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            _icon(notification.priority),
+            color: _color(palette, notification.priority),
+            size: 20,
+          ),
+          const SizedBox(width: AppDimensions.spaceSm + 2),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  notification.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  notification.body,
+                  style: TextStyle(
+                    color: palette.textMuted,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
