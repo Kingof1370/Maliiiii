@@ -520,6 +520,64 @@ final class FinancialLedger {
         ],
       );
 
+  FinancialLedger createGoal({required Goal goal}) {
+    if (goals.any((item) => item.id == goal.id)) {
+      throw FinancialValidationException('Goal already exists: ${goal.id}');
+    }
+    if (!goal.target.isPositive) {
+      throw FinancialValidationException('Goal target must be positive.');
+    }
+    if (goal.current.isNegative) {
+      throw FinancialValidationException('Goal current cannot be negative.');
+    }
+    return copyWith(goals: [...goals, goal]);
+  }
+
+  /// افزودن مبلغ به پیشرفت هدف؛ رزروِ هدف به‌صورت خودکار در پول آزاد اعمال
+  /// می‌شود و هیچ تراکنش مستقلی نمی‌سازد تا دوباره‌شماری نشود.
+  FinancialLedger contributeToGoal({
+    required String goalId,
+    required Money amount,
+  }) {
+    final Goal goal = goals.firstWhere(
+      (item) => item.id == goalId,
+      orElse: () => throw FinancialValidationException('Goal not found.'),
+    );
+    if (!amount.isPositive) {
+      throw FinancialValidationException('Contribution must be positive.');
+    }
+    final Money updated = goal.current + amount;
+    if (updated > goal.target) {
+      throw FinancialValidationException(
+        'Contribution exceeds goal remaining target.',
+      );
+    }
+    return copyWith(goals: [
+      for (final item in goals)
+        if (item.id == goalId)
+          Goal(
+            id: item.id,
+            name: item.name,
+            type: item.type,
+            target: item.target,
+            current: updated,
+            deadline: item.deadline,
+            priority: item.priority,
+          )
+        else
+          item,
+    ]);
+  }
+
+  FinancialLedger deleteGoal({required String goalId}) {
+    if (goals.every((item) => item.id != goalId)) {
+      throw FinancialValidationException('Goal not found: $goalId');
+    }
+    return copyWith(
+      goals: [for (final item in goals) if (item.id != goalId) item],
+    );
+  }
+
   FinancialLedger createBudget({required Budget budget}) {
     if (budgets.any((item) => item.id == budget.id)) {
       throw FinancialValidationException('Budget already exists: ${budget.id}');

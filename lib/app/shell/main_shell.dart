@@ -4,6 +4,7 @@ import '../localization/fa_strings.dart';
 import '../screens/accounts_screen.dart';
 import '../screens/budgets_screen.dart';
 import '../screens/calendar_screen.dart';
+import '../screens/goals_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/loans_screen.dart';
 import '../screens/reports_screen.dart';
@@ -27,6 +28,7 @@ class _MainShellState extends State<MainShell> {
       const AccountsScreen(),
       const CalendarScreen(),
       const BudgetsScreen(),
+      const GoalsScreen(),
       const ReportsScreen(),
       const LoansScreen(),
       const SettingsScreen(),
@@ -57,6 +59,11 @@ class _MainShellState extends State<MainShell> {
             icon: Icon(Icons.savings_outlined),
             selectedIcon: Icon(Icons.savings_rounded),
             label: 'بودجه',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.flag_outlined),
+            selectedIcon: Icon(Icons.flag_rounded),
+            label: 'اهداف',
           ),
           NavigationDestination(
             icon: Icon(Icons.insights_outlined),

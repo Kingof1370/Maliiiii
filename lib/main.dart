@@ -16,6 +16,8 @@ import 'app/state/account_controller.dart';
 import 'app/state/account_scope.dart';
 import 'app/state/budget_controller.dart';
 import 'app/state/budget_scope.dart';
+import 'app/state/goal_controller.dart';
+import 'app/state/goal_scope.dart';
 import 'app/state/ledger_controller.dart';
 import 'app/state/ledger_scope.dart';
 import 'app/state/loan_controller.dart';
@@ -61,6 +63,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
   late final AccountController _accountController;
   late final LoanController _loanController;
   late final BudgetController _budgetController;
+  late final GoalController _goalController;
 
   @override
   void initState() {
@@ -71,6 +74,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
     _accountController = AccountController(_ledgerController);
     _loanController = LoanController(_ledgerController);
     _budgetController = BudgetController(_ledgerController);
+    _goalController = GoalController(_ledgerController);
     _profileController.init();
     _ledgerController.init();
   }
@@ -104,6 +108,8 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
               controller: _budgetController,
               child: LoanScope(
                 controller: _loanController,
+                child: GoalScope(
+                controller: _goalController,
                 child: AccountScope(
                 controller: _accountController,
                 child: MaterialApp(
@@ -114,6 +120,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
                   themeMode: _themeMode(),
                   home: _home(),
                 ),
+              ),
               ),
             ),
           ),
