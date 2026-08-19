@@ -5,6 +5,8 @@ import 'package:maliiiii/maliiiii.dart';
 import '../design/app_dimensions.dart';
 import '../state/budget_scope.dart';
 import '../state/categories.dart';
+import '../state/category_controller.dart';
+import '../state/category_scope.dart';
 import '../widgets/jalali_date_field.dart';
 
 /// فرم ثبت بودجه با بازهٔ شمسی و دستهٔ اختیاری.
@@ -110,7 +112,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                     value: '_all',
                     child: Text('همهٔ هزینه‌ها'),
                   ),
-                  for (final String category in DefaultCategories.expense)
+                  for (final String category in _expenseCategories(context))
                     DropdownMenuItem<String>(
                       value: category,
                       child: Text(category),
@@ -148,4 +150,15 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
       ),
     );
   }
+}
+
+/// دسته‌های پیش‌فرض هزینه + دسته‌های سفارشی کاربر (بدون تکرار).
+List<String> _expenseCategories(BuildContext context) {
+  final List<String> defaults = DefaultCategories.expense;
+  final CategoryController controller = CategoryScope.of(context);
+  final Set<String> seen = <String>{
+    ...defaults,
+    for (final UserCategory custom in controller.expense) custom.name,
+  };
+  return seen.toList();
 }

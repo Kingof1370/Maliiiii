@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maliiiii/maliiiii.dart';
-
 import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../state/account_controller.dart';
 import '../state/account_scope.dart';
 import '../state/categories.dart';
+import '../state/category_controller.dart';
+import '../state/category_scope.dart';
 import '../theme/app_theme.dart';
 import 'premium_card.dart';
+
 
 enum TransactionFormKind { income, expense }
 
@@ -51,8 +53,24 @@ class _TransactionFormState extends State<TransactionForm> {
   bool _saving = false;
 
   bool get _isIncome => widget.kind == TransactionFormKind.income;
-  List<String> get _categories =>
-      _isIncome ? DefaultCategories.income : DefaultCategories.expense;
+  List<String> _categoriesOf(BuildContext context) {
+    final CategoryController controller = CategoryScope.of(context);
+    final List<String> defaults = _isIncome
+        ? DefaultCategories.income
+        : DefaultCategories.expense;
+    final List<String> all = <String>[
+      ...defaults,
+      for (final UserCategory custom in controller.categories)
+        if ((_isIncome && custom.kind == CategoryKind.income) ||
+            (!_isIncome && custom.kind == CategoryKind.expense))
+          custom.name,
+    ];
+    final Set<String> seen = <String>{};
+    return <String>[
+      for (final String name in all)
+        if (seen.add(name)) name,
+    ];
+  }
 
   @override
   void initState() {
@@ -70,6 +88,53 @@ class _TransactionFormState extends State<TransactionForm> {
     _amount.dispose();
     _description.dispose();
     super.dispose();
+  }
+
+  Future<void> _addNewCategory(BuildContext context) async {
+    final TextEditingController text = TextEditingController();
+    final CategoryKind kind = widget.kind == TransactionFormKind.income
+        ? CategoryKind.income
+        : CategoryKind.expense;
+    final String? name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          kind == CategoryKind.income ? 'دستهٔ درآمد جدید' : 'دستهٔ هزینهٔ جدید',
+        ),
+        content: TextField(
+          key: const Key('new-category-name'),
+          controller: text,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'نام دسته'),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('انصراف'),
+          ),
+          FilledButton(
+            key: const Key('new-category-save'),
+            onPressed: () => Navigator.pop(dialogContext, text.text.trim()),
+            child: const Text('افزودن'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.isEmpty) return;
+    try {
+      final CategoryController controller = CategoryScope.of(context);
+      await controller.add(
+        id: 'cat-${DateTime.now().microsecondsSinceEpoch}',
+        name: name,
+        kind: kind,
+      );
+      if (mounted) setState(() => _category = name);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
   }
 
   Future<void> _submit() async {
@@ -107,6 +172,7 @@ class _TransactionFormState extends State<TransactionForm> {
   Widget build(BuildContext context) {
     final AppPalette palette = context.appPalette;
     final AccountController controller = AccountScope.of(context);
+    final List<String> categories = _categoriesOf(context);
     final List<String> accountOptions = <String>[
       for (final Account account in controller.accounts) account.name,
     ];
@@ -162,12 +228,24 @@ class _TransactionFormState extends State<TransactionForm> {
               ),
             ),
             const SizedBox(height: AppDimensions.spaceMd),
+            Row(
+              children: <Widget>[
+                const Spacer(),
+                TextButton.icon(
+                  key: const Key('tx-new-category'),
+                  onPressed: () => _addNewCategory(context),
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('دستهٔ جدید'),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimensions.spaceXs),
             DropdownButtonFormField<String>(
               key: const Key('tx-category'),
               initialValue: _category,
               hint: const Text('انتخاب دسته'),
               items: <DropdownMenuItem<String>>[
-                for (final String category in _categories)
+                for (final String category in categories)
                   DropdownMenuItem<String>(
                     value: category,
                     child: Text(category),

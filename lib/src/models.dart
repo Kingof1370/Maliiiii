@@ -560,3 +560,32 @@ final class RecurringTransaction {
         active: json['active'] as bool? ?? true,
       );
 }
+
+
+/// دستهٔ سفارشی کاربر؛ [kind] تعیین می‌کند در هزینه یا درآمد ظاهر شود.
+enum CategoryKind { expense, income }
+
+final class UserCategory {
+  const UserCategory({
+    required this.id,
+    required this.name,
+    required this.kind,
+  });
+
+  final String id;
+  final String name;
+  final CategoryKind kind;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'name': name,
+        'kind': kind.name,
+      };
+
+  factory UserCategory.fromJson(Map<String, Object?> json) => UserCategory(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        kind: CategoryKind.values.asNameMap()[json['kind'] as String?] ??
+            CategoryKind.expense,
+      );
+}

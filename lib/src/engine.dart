@@ -88,6 +88,7 @@ final class FinancialLedger {
     this.budgets = const [],
     this.goals = const [],
     this.recurrings = const [],
+    this.customCategories = const [],
   });
 
   final List<Account> accounts;
@@ -96,6 +97,7 @@ final class FinancialLedger {
   final List<Budget> budgets;
   final List<Goal> goals;
   final List<RecurringTransaction> recurrings;
+  final List<UserCategory> customCategories;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'schemaVersion': 1,
@@ -118,6 +120,9 @@ final class FinancialLedger {
         'recurrings': <Object?>[
           for (final RecurringTransaction recurring in recurrings)
             recurring.toJson(),
+        ],
+        'customCategories': <Object?>[
+          for (final UserCategory item in customCategories) item.toJson(),
         ],
       };
 
@@ -159,6 +164,12 @@ final class FinancialLedger {
             in (json['recurrings'] as List<Object?>? ?? const <Object?>[]))
           RecurringTransaction.fromJson(entry(item)),
       ],
+      customCategories: <UserCategory>[
+        for (final Object? item
+            in (json['customCategories'] as List<Object?>? ??
+                const <Object?>[]))
+          UserCategory.fromJson(entry(item)),
+      ],
     );
   }
 
@@ -169,6 +180,7 @@ final class FinancialLedger {
     List<Budget>? budgets,
     List<Goal>? goals,
     List<RecurringTransaction>? recurrings,
+    List<UserCategory>? customCategories,
   }) =>
       FinancialLedger(
         accounts: accounts ?? this.accounts,
@@ -177,7 +189,41 @@ final class FinancialLedger {
         budgets: budgets ?? this.budgets,
         goals: goals ?? this.goals,
         recurrings: recurrings ?? this.recurrings,
+        customCategories: customCategories ?? this.customCategories,
       );
+
+
+  /// افزودن دستهٔ سفارشی؛ نام تکراری با همان نوع پذیرفته نمی‌شود.
+  FinancialLedger addCustomCategory({required UserCategory category}) {
+    final bool exists = customCategories.any(
+      (item) =>
+          item.name.trim() == category.name.trim() &&
+          item.kind == category.kind,
+    );
+    if (exists) {
+      throw FinancialValidationException(
+        'این دسته قبلاً اضافه شده است.',
+      );
+    }
+    return copyWith(customCategories: <UserCategory>[
+      ...customCategories,
+      category,
+    ]);
+  }
+
+  /// حذف دستهٔ سفارشی؛ تراکنش‌هایی که از نام آن استفاده کرده‌اند دست‌نخورده
+  /// می‌مانند (نام دسته به‌عنوان رشته در تراکنش ذخیره شده است).
+  FinancialLedger deleteCustomCategory(String id) {
+    if (customCategories.every((item) => item.id != id)) {
+      throw FinancialValidationException('Category not found: $id');
+    }
+    return copyWith(
+      customCategories: <UserCategory>[
+        for (final UserCategory item in customCategories)
+          if (item.id != id) item,
+      ],
+    );
+  }
 
   Money accountBalance(String accountId) {
     final account = accounts.firstWhere(

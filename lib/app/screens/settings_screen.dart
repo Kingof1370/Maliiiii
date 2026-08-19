@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:maliiiii/maliiiii.dart';
-
 import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../localization/fa_strings.dart';
@@ -12,6 +11,8 @@ import '../widgets/developer_footer.dart';
 import '../widgets/premium_card.dart';
 import 'about_screen.dart';
 import 'edit_profile_screen.dart';
+import 'manage_categories_screen.dart';
+
 
 /// تنظیمات: پروفایل، امنیت (PIN)، حالت نمایش، لحن اعلان، AI و درباره.
 class SettingsScreen extends StatelessWidget {
@@ -52,6 +53,16 @@ class SettingsScreen extends StatelessWidget {
                   title: 'لحن اعلان‌ها',
                   value: (profile?.tone ?? NotificationTone.friendly).label,
                   onTap: () => _showToneSheet(context, controller),
+                ),
+                Divider(color: palette.divider, height: 1),
+                _SettingRow(
+                  icon: Icons.category_outlined,
+                  title: 'دسته‌های سفارشی',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ManageCategoriesScreen(),
+                    ),
+                  ),
                 ),
                 Divider(color: palette.divider, height: 1),
                 SwitchListTile(

@@ -204,3 +204,15 @@
 - فرم تراکنش: پشتیبانی از مقادیر اولیه و برچسب سفارشی (برای ویرایش).
 - صفحهٔ حساب‌ها: دکمهٔ مدیریت (ویرایش نام/نوع/یادداشت، حذف با محافظ).
 - تست‌ها: `test/transaction_edit_test.dart` و `test/transactions_flow_test.dart`.
+
+## دسته‌های سفارشی کاربر (P016)
+
+- مدل `UserCategory` (id/name/kind) در `models.dart`؛ ذخیره در دفترکل
+  (`customCategories`) با سازگاری عقب‌رو (کلید اختیاری در JSON).
+- موتور (`engine.dart`): `addCustomCategory` (بدون نام تکراری با همان نوع) و
+  `deleteCustomCategory` (تراکنش‌های قدیمی دست‌نخورده می‌مانند).
+- کنترلر `CategoryController` + `CategoryScope` متصل در `main.dart`.
+- فرم تراکنش و فرم بودجه: فهرست دسته = پیش‌فرض + سفارشی (بدون تکرار)؛
+  دکمهٔ «دستهٔ جدید» در فرم تراکنش.
+- صفحهٔ «دسته‌های سفارشی» در تنظیمات: افزودن/حذف دستهٔ هزینه و درآمد.
+- تست‌ها: `test/category_engine_test.dart` و `test/category_flow_test.dart`.
