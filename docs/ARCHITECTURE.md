@@ -235,3 +235,15 @@
 - پس از ثبت پروفایل، حساب از طریق `AccountController.addAccount` با شناسهٔ
   `acc-onboarding-…` ساخته می‌شود؛ اگر نام حساب پاک شود، حساب ساخته نمی‌شود.
 - تست: `test/onboarding_account_test.dart`.
+
+## نمودارهای گزارش (P019)
+
+- ویجت‌های نموداری بدون وابستگی بیرونی (CustomPainter خالص):
+  `lib/app/widgets/report_charts.dart` — `DonutChart` (سهم دسته‌ها از هزینه)
+  و `TrendLineChart` (روند ۶ بازهٔ شمسی اخیر؛ درآمد سبز، هزینه قرمز).
+- لایهٔ داده: `TrendPoint` و `trendSeries(ledger, month)` در
+  `lib/app/state/report_data.dart` — سری ۶ ماهه از دفترکل واقعی.
+- صفحهٔ «گزارش‌ها»: دونات بالای کارت تفکیک دسته‌ها و کارت «روند ۶ ماه اخیر»
+  (کلید `report-trend-card`).
+- تست‌ها: `trendSeries` در `test/report_data_test.dart` و رندر دونات/روند در
+  `test/charts_widget_test.dart`.

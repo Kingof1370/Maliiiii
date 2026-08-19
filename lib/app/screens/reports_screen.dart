@@ -8,6 +8,7 @@ import '../state/report_data.dart';
 import '../theme/app_theme.dart';
 import '../widgets/developer_footer.dart';
 import '../widgets/premium_card.dart';
+import '../widgets/report_charts.dart';
 
 /// گزارش‌های داده‌محور: خلاصهٔ ماه شمسی، سلامت مالی، پیش‌بینی، تفکیک
 /// دسته‌ها و گزارش متنی قابل‌کپی.
@@ -35,6 +36,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       report.start,
       report.end,
     );
+    final List<TrendPoint> trend = trendSeries(ledger, _month);
     final int health = ledger.healthScore(_month.toGregorian()).value;
     final Forecast? forecast = ledger.forecast(
       asOf: now,
@@ -84,6 +86,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             if (categories.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppDimensions.spaceMd),
               _CategoriesCard(categories: categories),
+            ],
+            if (trend.any((TrendPoint point) =>
+                point.income.minorUnits > 0 || point.expense.minorUnits > 0)) ...<Widget>[
+              const SizedBox(height: AppDimensions.spaceMd),
+              _TrendCard(points: trend),
             ],
             const SizedBox(height: AppDimensions.spaceMd),
             _TextReportCard(
@@ -383,6 +390,8 @@ class _CategoriesCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: AppDimensions.spaceMd),
+          DonutChart(slices: categories, palette: palette),
+          const SizedBox(height: AppDimensions.spaceMd),
           for (final CategorySlice slice in categories)
             Padding(
               padding: const EdgeInsets.only(bottom: AppDimensions.spaceSm),
@@ -514,6 +523,41 @@ class _EmptyReport extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(color: palette.textMuted, fontSize: 12),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendCard extends StatelessWidget {
+  const _TrendCard({required this.points});
+
+  final List<TrendPoint> points;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.appPalette;
+    return PremiumCard(
+      key: const Key('report-trend-card'),
+      elevation: PremiumElevation.raised,
+      accent: palette.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.show_chart_rounded, color: palette.primary),
+              const SizedBox(width: AppDimensions.spaceSm),
+              Text(
+                'روند ۶ ماه اخیر',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spaceMd),
+          TrendLineChart(points: points, palette: palette),
         ],
       ),
     );

@@ -90,4 +90,61 @@ void main() {
     expect(slice.fraction(0), 0);
     expect(slice.fraction(-1), 0);
   });
+
+  test('trendSeries spans six jalali months ending at current month', () {
+    final FinancialLedger small = FinancialLedger(
+      accounts: <Account>[
+        Account(
+          id: 'a',
+          name: 'نقدی',
+          type: AccountType.cash,
+          openingBalance: const Money(0),
+        ),
+      ],
+      transactions: <LedgerTransaction>[
+        LedgerTransaction(
+          id: 'x1',
+          accountId: 'a',
+          amount: const Money(500_000),
+          date: DateTime(2026, 8, 5),
+          kind: TransactionKind.income,
+          category: 'حقوق',
+        ),
+      ],
+    );
+    final List<TrendPoint> points = trendSeries(small, JalaliDate.today());
+    expect(points, hasLength(6));
+    expect(points.last.label, JalaliDate.today().monthName);
+    final int total = points.fold<int>(0, (sum, p) => sum + p.income.minorUnits);
+    expect(total, 500_000);
+    expect(points.last.income.minorUnits, 500_000);
+  });
+
+  test('trendSeries excludes months outside the six-month window', () {
+    final FinancialLedger small = FinancialLedger(
+      accounts: <Account>[
+        Account(
+          id: 'a',
+          name: 'نقدی',
+          type: AccountType.cash,
+          openingBalance: const Money(0),
+        ),
+      ],
+      transactions: <LedgerTransaction>[
+        LedgerTransaction(
+          id: 'old',
+          accountId: 'a',
+          amount: const Money(1_000_000),
+          date: DateTime(2024, 1, 5),
+          kind: TransactionKind.income,
+          category: 'قدیمی',
+        ),
+      ],
+    );
+    final List<TrendPoint> points = trendSeries(small, JalaliDate.today());
+    final int total = points.fold<int>(0, (sum, p) => sum + p.income.minorUnits);
+    expect(total, 0);
+    final int expTotal = points.fold<int>(0, (sum, p) => sum + p.expense.minorUnits);
+    expect(expTotal, 0);
+  });
 }

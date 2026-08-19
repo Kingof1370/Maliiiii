@@ -59,7 +59,8 @@ JalaliMonthReport buildJalaliMonthReport(
   JalaliDate month,
 ) {
   final DateTime start = JalaliDate(month.year, month.month, 1).toGregorian();
-  final DateTime end = month.addMonths(1).toGregorian();
+  final JalaliDate next = month.addMonths(1);
+  final DateTime end = JalaliDate(next.year, next.month, 1).toGregorian();
   Money sum(TransactionKind kind) => ledger.transactions
       .where(
         (item) =>
@@ -102,4 +103,44 @@ String buildTextReport({
     }
   }
   return buffer.toString().trimRight();
+}
+
+/// نقطه‌ای از روند ماهانه: برچسب ماه و مجموع درآمد/هزینه.
+final class TrendPoint {
+  const TrendPoint({
+    required this.label,
+    required this.income,
+    required this.expense,
+  });
+
+  final String label;
+  final Money income;
+  final Money expense;
+}
+
+/// سری روند ۶ بازهٔ شمسیِ منتهی به [month] برای نمودار خطی؛
+/// هر نقطه برچسب کوتاه ماه (مثل «مرداد») و مجموع درآمد و هزینه دارد.
+List<TrendPoint> trendSeries(FinancialLedger ledger, JalaliDate month) {
+  final List<TrendPoint> points = <TrendPoint>[];
+  JalaliDate cursor = month.addMonths(-5);
+  for (int index = 0; index < 6; index++) {
+    final DateTime start = JalaliDate(cursor.year, cursor.month, 1).toGregorian();
+    final JalaliDate next = cursor.addMonths(1);
+    final DateTime end = JalaliDate(next.year, next.month, 1).toGregorian();
+    Money sum(TransactionKind kind) => ledger.transactions
+        .where(
+          (item) =>
+              item.kind == kind &&
+              !item.date.isBefore(start) &&
+              item.date.isBefore(end),
+        )
+        .fold(const Money(0), (total, item) => total + item.amount);
+    points.add(TrendPoint(
+      label: cursor.monthName,
+      income: sum(TransactionKind.income),
+      expense: sum(TransactionKind.expense),
+    ));
+    cursor = cursor.addMonths(1);
+  }
+  return points;
 }
