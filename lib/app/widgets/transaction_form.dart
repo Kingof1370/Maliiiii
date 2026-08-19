@@ -17,6 +17,11 @@ class TransactionForm extends StatefulWidget {
     super.key,
     required this.kind,
     required this.onDone,
+    this.initialAccountId,
+    this.initialAmount = 0,
+    this.initialCategory,
+    this.initialDescription = '',
+    this.submitLabel,
   });
 
   final TransactionFormKind kind;
@@ -26,6 +31,12 @@ class TransactionForm extends StatefulWidget {
     String category,
     String description,
   ) onDone;
+
+  final String? initialAccountId;
+  final int initialAmount;
+  final String? initialCategory;
+  final String initialDescription;
+  final String? submitLabel;
 
   @override
   State<TransactionForm> createState() => _TransactionFormState();
@@ -42,6 +53,17 @@ class _TransactionFormState extends State<TransactionForm> {
   bool get _isIncome => widget.kind == TransactionFormKind.income;
   List<String> get _categories =>
       _isIncome ? DefaultCategories.income : DefaultCategories.expense;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialAmount > 0) {
+      _amount.text = widget.initialAmount.toString();
+    }
+    _description.text = widget.initialDescription;
+    _accountId = widget.initialAccountId;
+    _category = widget.initialCategory;
+  }
 
   @override
   void dispose() {
@@ -178,7 +200,7 @@ class _TransactionFormState extends State<TransactionForm> {
                 icon: Icon(
                   _isIncome ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
                 ),
-                label: Text(_isIncome ? 'ثبت درآمد' : 'ثبت هزینه'),
+                label: Text(widget.submitLabel ?? (_isIncome ? 'ثبت درآمد' : 'ثبت هزینه')),
               ),
             ),
           ],

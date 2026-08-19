@@ -97,4 +97,49 @@ final class AccountController extends ChangeNotifier {
           description: description,
         ),
       );
+
+  /// ویرایش تراکنش درجا؛ تغییرات از طریق [LedgerController.commit] پایدار می‌شوند.
+  Future<FinancialLedger> updateTransaction({
+    required String id,
+    required String accountId,
+    required int amountMinorUnits,
+    required DateTime date,
+    String? category,
+    String? description,
+  }) =>
+      _ledger.commit(
+        (FinancialLedger current) => current.updateTransaction(
+          id: id,
+          accountId: accountId,
+          amount: Money(amountMinorUnits, currency: 'IRR'),
+          date: date,
+          category: category,
+          description: description,
+        ),
+      );
+
+  Future<FinancialLedger> deleteTransaction(String id) =>
+      _ledger.commit((FinancialLedger current) => current.deleteTransaction(id));
+
+  Future<FinancialLedger> updateAccount({
+    required String id,
+    String? name,
+    AccountType? type,
+    int? openingMinorUnits,
+    String? notes,
+  }) =>
+      _ledger.commit(
+        (FinancialLedger current) => current.updateAccount(
+          id: id,
+          name: name,
+          type: type,
+          openingBalance: openingMinorUnits == null
+              ? null
+              : Money(openingMinorUnits, currency: 'IRR'),
+          notes: notes,
+        ),
+      );
+
+  Future<FinancialLedger> deleteAccount(String id) =>
+      _ledger.commit((FinancialLedger current) => current.deleteAccount(id));
 }

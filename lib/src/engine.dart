@@ -370,6 +370,157 @@ final class FinancialLedger {
     );
     return copyWith(transactions: [...transactions, outgoing, incoming]);
   }
+  /// ویرایش درجأ یک تراکنش؛ برای انتقال هر دو طرف با هم به‌روز می‌شوند.
+  /// پرداخت قسط از صفحهٔ وام مدیریت می‌شود و اینجا قابل ویرایش نیست.
+  FinancialLedger updateTransaction({
+    required String id,
+    String? accountId,
+    Money? amount,
+    DateTime? date,
+    String? category,
+    String? description,
+  }) {
+    final int index = transactions.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      throw FinancialValidationException('Transaction not found: $id');
+    }
+    final LedgerTransaction existing = transactions[index];
+    if (existing.kind == TransactionKind.installmentPayment) {
+      throw FinancialValidationException(
+        'Installment payments are managed from the loan screen.',
+      );
+    }
+    if (existing.transferId != null) {
+      final String transferId = existing.transferId!;
+      return copyWith(
+        transactions: <LedgerTransaction>[
+          for (final LedgerTransaction tx in transactions)
+            if (tx.transferId == transferId)
+              LedgerTransaction(
+                id: tx.id,
+                accountId: tx.accountId,
+                amount: amount ?? tx.amount,
+                date: date ?? tx.date,
+                kind: tx.kind,
+                category: category ?? tx.category,
+                description: description ?? tx.description,
+                referenceId: tx.referenceId,
+                transferId: tx.transferId,
+              )
+            else
+              tx,
+        ],
+      );
+    }
+    return copyWith(
+      transactions: <LedgerTransaction>[
+        for (final LedgerTransaction tx in transactions)
+          if (tx.id == id)
+            LedgerTransaction(
+              id: tx.id,
+              accountId: accountId ?? tx.accountId,
+              amount: amount ?? tx.amount,
+              date: date ?? tx.date,
+              kind: tx.kind,
+              category: category ?? tx.category,
+              description: description ?? tx.description,
+              referenceId: tx.referenceId,
+              transferId: tx.transferId,
+            )
+          else
+            tx,
+      ],
+    );
+  }
+
+  /// حذف تراکنش؛ برای انتقال، هر دو طرف (out/in) حذف می‌شوند.
+  /// پرداخت قسط از صفحهٔ وام مدیریت می‌شود.
+  FinancialLedger deleteTransaction(String id) {
+    final int index = transactions.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      throw FinancialValidationException('Transaction not found: $id');
+    }
+    final LedgerTransaction existing = transactions[index];
+    if (existing.kind == TransactionKind.installmentPayment) {
+      throw FinancialValidationException(
+        'Installment payments are managed from the loan screen.',
+      );
+    }
+    if (existing.transferId != null) {
+      final String transferId = existing.transferId!;
+      return copyWith(
+        transactions: <LedgerTransaction>[
+          for (final LedgerTransaction tx in transactions)
+            if (tx.transferId != transferId) tx,
+        ],
+      );
+    }
+    return copyWith(
+      transactions: <LedgerTransaction>[
+        for (final LedgerTransaction tx in transactions)
+          if (tx.id != id) tx,
+      ],
+    );
+  }
+
+  /// ویرایش نام/نوع/موجودی اولیه/یادداشت حساب.
+  FinancialLedger updateAccount({
+    required String id,
+    String? name,
+    AccountType? type,
+    Money? openingBalance,
+    String? notes,
+  }) {
+    final int index = accounts.indexWhere((item) => item.id == id);
+    if (index < 0) {
+      throw FinancialValidationException('Account not found: $id');
+    }
+    final Account existing = accounts[index];
+    final Account updated = Account(
+      id: existing.id,
+      name: name ?? existing.name,
+      type: type ?? existing.type,
+      openingBalance: openingBalance ?? existing.openingBalance,
+      notes: notes ?? existing.notes,
+    );
+    return copyWith(
+      accounts: <Account>[
+        for (final Account account in accounts)
+          if (account.id == id) updated else account,
+      ],
+    );
+  }
+
+  /// حذف حساب؛ فقط وقتی هیچ تراکنش، پرداخت قسط یا تراکنش تکراری نداشته باشد.
+  FinancialLedger deleteAccount(String id) {
+    if (accounts.every((item) => item.id != id)) {
+      throw FinancialValidationException('Account not found: $id');
+    }
+    if (transactions.any((tx) => tx.accountId == id)) {
+      throw FinancialValidationException(
+        'این حساب تراکنش دارد؛ ابتدا تراکنش‌هایش را حذف کنید.',
+      );
+    }
+    final bool usedByInstallment = loans.any((loan) => loan.installments
+        .any((inst) => inst.payments.any((pay) => pay.accountId == id)));
+    if (usedByInstallment) {
+      throw FinancialValidationException(
+        'این حساب در پرداخت قسط استفاده شده است.',
+      );
+    }
+    if (recurrings.any((item) => item.accountId == id)) {
+      throw FinancialValidationException(
+        'این حساب در تراکنش تکراری استفاده شده است.',
+      );
+    }
+    return copyWith(
+      accounts: <Account>[
+        for (final Account account in accounts)
+          if (account.id != id) account,
+      ],
+    );
+  }
+
 
   FinancialLedger createAccount({
     required Account account,

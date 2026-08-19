@@ -7,6 +7,7 @@ import '../design/app_dimensions.dart';
 import '../localization/fa_strings.dart';
 import '../screens/add_transaction_screen.dart';
 import '../screens/add_transfer_screen.dart';
+import '../screens/transactions_screen.dart';
 import '../state/ledger_scope.dart';
 import '../state/profile_scope.dart';
 import '../theme/app_theme.dart';
@@ -43,6 +44,8 @@ class HomeScreen extends StatelessWidget {
             _HealthAndForecast(ledger: ledger, today: today),
             const SizedBox(height: AppDimensions.spaceMd),
             _NotificationsCard(ledger: ledger, profile: profile, today: today),
+            const SizedBox(height: AppDimensions.spaceMd),
+            const _TransactionsEntry(),
             const SizedBox(height: AppDimensions.spaceLg),
             const _QuickAddCard(),
             const SizedBox(height: AppDimensions.spaceLg),
@@ -817,6 +820,58 @@ class _NotificationTile extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ورودی «تاریخچهٔ تراکنش‌ها» از داشبورد با شمارندهٔ تراکنش‌ها.
+class _TransactionsEntry extends StatelessWidget {
+  const _TransactionsEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette palette = context.appPalette;
+    final FinancialLedger ledger = LedgerScope.of(context).ledger;
+    return PremiumCard(
+      key: const Key('transactions-entry'),
+      elevation: PremiumElevation.flat,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const TransactionListScreen(),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.receipt_long_outlined, color: palette.primary),
+          const SizedBox(width: AppDimensions.spaceSm + 4),
+          const Expanded(
+            child: Text(
+              'تاریخچهٔ تراکنش‌ها',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spaceSm,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: palette.primarySoft,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+            ),
+            child: Text(
+              toPersianDigits(ledger.transactions.length),
+              style: TextStyle(
+                color: palette.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimensions.spaceSm),
+          Icon(Icons.chevron_left_rounded, color: palette.textMuted),
         ],
       ),
     );
