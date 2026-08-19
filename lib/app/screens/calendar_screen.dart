@@ -5,6 +5,8 @@ import '../design/app_colors.dart';
 import '../design/app_dimensions.dart';
 import '../state/calendar_data.dart';
 import '../state/ledger_scope.dart';
+import '../state/note_controller.dart';
+import '../state/note_scope.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_card.dart';
 
@@ -273,6 +275,124 @@ class _CalendarScreenState extends State<CalendarScreen> {
             )
           else
             for (final DayEvent event in events) _EventRow(event: event),
+          const SizedBox(height: AppDimensions.spaceMd),
+          const Divider(height: 1),
+          const SizedBox(height: AppDimensions.spaceMd),
+          _buildNoteSection(palette),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoteSection(AppPalette palette) {
+    final NoteController noteController = NoteScope.of(context);
+    final String key = _key(_selected);
+    final DailyNote? note = noteController.noteFor(key);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Icon(Icons.sticky_note_2_outlined, size: 18, color: palette.gold),
+            const SizedBox(width: AppDimensions.spaceSm),
+            Expanded(
+              child: Text(
+                'یادداشت روز',
+                style: TextStyle(
+                  color: palette.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              key: const Key('cal-note-button'),
+              onPressed: () =>
+                  _openNoteEditor(context, noteController, key),
+              icon: Icon(
+                note == null ? Icons.add_rounded : Icons.edit_outlined,
+                size: 16,
+              ),
+              label: Text(note == null ? 'افزودن' : 'ویرایش'),
+            ),
+          ],
+        ),
+        if (note == null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppDimensions.spaceSm),
+            child: Text(
+              'برای این روز یادداشتی ثبت نشده است.',
+              style: TextStyle(color: palette.textMuted, fontSize: 12),
+            ),
+          )
+        else ...<Widget>[
+          const SizedBox(height: AppDimensions.spaceSm),
+          Text(
+            note.text,
+            style: TextStyle(
+              color: palette.textSecondary,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              key: const Key('cal-note-delete'),
+              onPressed: () => noteController.delete(key),
+              icon: const Icon(Icons.delete_outline_rounded, size: 15),
+              label: const Text('حذف'),
+              style: TextButton.styleFrom(
+                foregroundColor: palette.danger,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _openNoteEditor(
+    BuildContext context,
+    NoteController noteController,
+    String dateKey,
+  ) async {
+    final DailyNote? existing = noteController.noteFor(dateKey);
+    final TextEditingController text =
+        TextEditingController(text: existing?.text ?? '');
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(
+          'یادداشت روز ${toPersianDigits(_selected.day)} ${_selected.monthName}',
+        ),
+        content: TextField(
+          key: const Key('note-text'),
+          controller: text,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 5,
+          decoration: const InputDecoration(
+            hintText: 'چیزی برای این روز بنویس…',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('انصراف'),
+          ),
+          FilledButton(
+            key: const Key('note-save'),
+            onPressed: () async {
+              final String value = text.text.trim();
+              if (value.isNotEmpty) {
+                await noteController.save(dateKey: dateKey, text: value);
+              }
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+            },
+            child: const Text('ذخیره'),
+          ),
         ],
       ),
     );

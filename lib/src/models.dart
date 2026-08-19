@@ -589,3 +589,39 @@ final class UserCategory {
             CategoryKind.expense,
       );
 }
+
+/// یادداشت روزانهٔ مرتبط با تقویم شمسی؛ [dateKey] کلید روز است
+/// (مثل 1404-05-28) و در هر روز فقط یک یادداشت نگه داشته می‌شود.
+final class DailyNote {
+  const DailyNote({
+    required this.id,
+    required this.dateKey,
+    required this.text,
+    required this.createdAt,
+    this.updatedAt,
+  });
+
+  final String id;
+  final String dateKey;
+  final String text;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+        'id': id,
+        'dateKey': dateKey,
+        'text': text,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
+      };
+
+  factory DailyNote.fromJson(Map<String, Object?> json) => DailyNote(
+        id: json['id'] as String? ?? '',
+        dateKey: json['dateKey'] as String? ?? '',
+        text: json['text'] as String? ?? '',
+        createdAt: _parseDate(json['createdAt']),
+        updatedAt: json['updatedAt'] == null
+            ? null
+            : _parseDate(json['updatedAt']),
+      );
+}

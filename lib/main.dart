@@ -1,8 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-
 import 'app/branding.dart';
 import 'app/data/ledger_repository.dart';
 import 'app/data/ledger_store.dart';
@@ -24,10 +22,14 @@ import 'app/state/ledger_controller.dart';
 import 'app/state/ledger_scope.dart';
 import 'app/state/loan_controller.dart';
 import 'app/state/loan_scope.dart';
+import 'app/state/note_controller.dart';
+import 'app/state/note_scope.dart';
 import 'app/state/profile_controller.dart';
 import 'app/state/profile_scope.dart';
 import 'app/theme/app_theme.dart';
 import 'src/profile.dart';
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +69,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
   late final BudgetController _budgetController;
   late final GoalController _goalController;
   late final CategoryController _categoryController;
+  late final NoteController _noteController;
 
   @override
   void initState() {
@@ -79,6 +82,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
     _budgetController = BudgetController(_ledgerController);
     _goalController = GoalController(_ledgerController);
     _categoryController = CategoryController(_ledgerController);
+    _noteController = NoteController(_ledgerController);
     _profileController.init();
     _ledgerController.init();
   }
@@ -108,7 +112,9 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
           controller: _profileController,
           child: LedgerScope(
             controller: _ledgerController,
-            child: CategoryScope(
+            child: NoteScope(
+              controller: _noteController,
+              child: CategoryScope(
               controller: _categoryController,
               child: BudgetScope(
               controller: _budgetController,
@@ -126,6 +132,7 @@ class _MaliiiiiAppState extends State<MaliiiiiApp> {
                   themeMode: _themeMode(),
                   home: _home(),
                 ),
+              ),
               ),
               ),
               ),

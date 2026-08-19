@@ -89,6 +89,7 @@ final class FinancialLedger {
     this.goals = const [],
     this.recurrings = const [],
     this.customCategories = const [],
+    this.dailyNotes = const [],
   });
 
   final List<Account> accounts;
@@ -98,6 +99,7 @@ final class FinancialLedger {
   final List<Goal> goals;
   final List<RecurringTransaction> recurrings;
   final List<UserCategory> customCategories;
+  final List<DailyNote> dailyNotes;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'schemaVersion': 1,
@@ -123,6 +125,9 @@ final class FinancialLedger {
         ],
         'customCategories': <Object?>[
           for (final UserCategory item in customCategories) item.toJson(),
+        ],
+        'dailyNotes': <Object?>[
+          for (final DailyNote note in dailyNotes) note.toJson(),
         ],
       };
 
@@ -170,6 +175,11 @@ final class FinancialLedger {
                 const <Object?>[]))
           UserCategory.fromJson(entry(item)),
       ],
+      dailyNotes: <DailyNote>[
+        for (final Object? item
+            in (json['dailyNotes'] as List<Object?>? ?? const <Object?>[]))
+          DailyNote.fromJson(entry(item)),
+      ],
     );
   }
 
@@ -181,6 +191,7 @@ final class FinancialLedger {
     List<Goal>? goals,
     List<RecurringTransaction>? recurrings,
     List<UserCategory>? customCategories,
+    List<DailyNote>? dailyNotes,
   }) =>
       FinancialLedger(
         accounts: accounts ?? this.accounts,
@@ -190,6 +201,7 @@ final class FinancialLedger {
         goals: goals ?? this.goals,
         recurrings: recurrings ?? this.recurrings,
         customCategories: customCategories ?? this.customCategories,
+        dailyNotes: dailyNotes ?? this.dailyNotes,
       );
 
 
@@ -224,6 +236,25 @@ final class FinancialLedger {
       ],
     );
   }
+
+
+  /// تنظیم یادداشت یک روز؛ اگر برای همان [DailyNote.dateKey] یادداشتی
+  /// باشد، جایگزین می‌شود (در هر روز فقط یک یادداشت).
+  FinancialLedger setDailyNote({required DailyNote note}) => copyWith(
+        dailyNotes: <DailyNote>[
+          for (final DailyNote existing in dailyNotes)
+            if (existing.dateKey != note.dateKey) existing,
+          note,
+        ],
+      );
+
+  /// حذف یادداشت روز؛ اگر روز یادداشتی نداشته باشد تغییری ایجاد نمی‌شود.
+  FinancialLedger deleteDailyNote(String dateKey) => copyWith(
+        dailyNotes: <DailyNote>[
+          for (final DailyNote existing in dailyNotes)
+            if (existing.dateKey != dateKey) existing,
+        ],
+      );
 
   Money accountBalance(String accountId) {
     final account = accounts.firstWhere(

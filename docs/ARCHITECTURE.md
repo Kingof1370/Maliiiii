@@ -216,3 +216,14 @@
   دکمهٔ «دستهٔ جدید» در فرم تراکنش.
 - صفحهٔ «دسته‌های سفارشی» در تنظیمات: افزودن/حذف دستهٔ هزینه و درآمد.
 - تست‌ها: `test/category_engine_test.dart` و `test/category_flow_test.dart`.
+
+## یادداشت روزانه (P017)
+
+- مدل `DailyNote` (id/dateKey/text/createdAt/updatedAt) در `models.dart`؛
+  [dateKey] کلید روز شمسی (مثل 1404-05-28) و در هر روز فقط یک یادداشت.
+- دفترکل: فیلد `dailyNotes` (سازگار با فایل‌های قدیمی — کلید اختیاری)؛
+  موتور: `setDailyNote` (جایگزینی در همان روز) و `deleteDailyNote`.
+- کنترلر `NoteController` + `NoteScope` متصل در `main.dart`.
+- تقویم شمسی: بخش «یادداشت روز» در کارت جزئیات روز انتخاب‌شده با افزودن/
+  ویرایش/حذف از طریق دیالوگ.
+- تست‌ها: `test/note_engine_test.dart` و `test/note_flow_test.dart`.
