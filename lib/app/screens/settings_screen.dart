@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/developer_footer.dart';
 import '../widgets/premium_card.dart';
 import 'about_screen.dart';
+import 'assistant_screen.dart';
 import 'edit_profile_screen.dart';
 import 'manage_categories_screen.dart';
 
@@ -65,12 +66,22 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 Divider(color: palette.divider, height: 1),
+                _SettingRow(
+                  icon: Icons.auto_awesome_rounded,
+                  title: 'دستیار هوشمند محلی',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const AssistantScreen(),
+                    ),
+                  ),
+                ),
+                Divider(color: palette.divider, height: 1),
                 SwitchListTile(
                   key: const Key('settings-ai-switch'),
                   secondary: Icon(Icons.auto_awesome_rounded,
                       color: palette.gold),
-                  title: const Text('هوش مصنوعی محلی'),
-                  subtitle: const Text('اختیاری — در فاز Local AI متصل می‌شود'),
+                  title: const Text('نمایش بینش‌ها'),
+                  subtitle: const Text('تحلیل محلی داده‌ها — بدون ارسال به بیرون'),
                   value: profile?.aiEnabled ?? false,
                   onChanged: (bool value) => _updateProfile(
                     controller,

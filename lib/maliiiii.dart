@@ -1,5 +1,6 @@
 library maliiiii;
 
+export 'src/assistant.dart';
 export 'src/calendar.dart';
 export 'src/engine.dart';
 export 'src/loan_schedule.dart';

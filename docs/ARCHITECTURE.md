@@ -247,3 +247,15 @@
   (کلید `report-trend-card`).
 - تست‌ها: `trendSeries` در `test/report_data_test.dart` و رندر دونات/روند در
   `test/charts_widget_test.dart`.
+
+## دستیار هوشمند محلی (P020)
+
+- موتور بینش‌های مالی قاعده‌محور در `lib/src/assistant.dart`:
+  `buildInsights(ledger, asOf)` — بدون وابستگی بیرونی و بدون ارسال داده؛
+  هر بینش `Insight` با عنوان، متن فارسی، لحن (`InsightTone`) و اولویت دارد.
+- بینش‌ها: نمای کلی (موجودی و پول آزاد)، امتیاز سلامت مالی، افزایش هزینه نسبت
+  به ماه قبل، بزرگ‌ترین دستهٔ هزینه، بودجه‌های ردشده، فشار بدهی، اقساط معوق/
+  پیش‌رو، هدف در خطر، پیش‌بینی پایان ماه و موجودی منفی.
+- صفحهٔ «دستیار هوشمند» (`lib/app/screens/assistant_screen.dart`) با کارت‌های
+  رنگی بر اساس لحن؛ ورود از تنظیمات و سوییچ «نمایش بینش‌ها» (aiEnabled).
+- تست‌ها: `test/assistant_engine_test.dart` و `test/assistant_screen_test.dart`.
