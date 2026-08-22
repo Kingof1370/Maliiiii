@@ -1,17 +1,26 @@
 name: iOS Release IPA
 
-# ساخت فایل IPA (بدون امضا) روی macOS رانر گیت‌هاب برای نصب روی آیفون
-# از طریق AltStore / Sideloadly با اپل‌آیدی شخصی، یا امضای نهایی برای
-# TestFlight / App Store با اکانت توسعه‌دهنده.
+# ساخت فایل IPA (بدون امضا) روی macOS رانر و انتشار آن به‌صورت GitHub Release
+# با لینک مستقیم دانلود عمومی.
+#
+# نصب روی آیفون: IPA بدون امضاست؛ با AltStore / Sideloadly و اپل‌آیدی شخصی
+# نصب می‌شود، یا برای TestFlight / App Store باید با اکانت توسعه‌دهنده امضا شود.
 on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
+    paths:
+      - "lib/**"
+      - "ios/**"
+      - "pubspec.yaml"
+      - ".github/workflows/ios-release.yml"
 
 jobs:
   build-ipa:
-    name: Build unsigned IPA
+    name: Build and publish unsigned IPA
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,12 +34,21 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Read version
+        id: version
+        run: echo "ver=$(grep '^version:' pubspec.yaml | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
       - name: Build unsigned IPA
         run: flutter build ipa --no-codesign --release
 
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release with IPA
+        uses: softprops/action-gh-release@v2
         with:
-          name: maliiiii-ios-ipa
-          path: build/ios/ipa/*.ipa
-          if-no-files-found: error
+          tag_name: ios-v${{ steps.version.outputs.ver }}
+          name: مالیار iOS ${{ steps.version.outputs.ver }} (IPA بدون امضا)
+          body: |
+            فایل IPA نسخهٔ ${{ steps.version.outputs.ver }} ساخته‌شده با Flutter 3.47.
+            - نصب: AltStore یا Sideloadly + اپل‌آیدی شخصی (هر ۷ روز تمدید)
+            - انتشار رسمی: نیاز به اکانت Apple Developer (TestFlight / App Store)
+          files: build/ios/ipa/*.ipa
+          fail_on_unmatched_files: true
