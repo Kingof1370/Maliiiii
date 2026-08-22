@@ -1,10 +1,5 @@
 name: iOS Release IPA
 
-# ساخت فایل IPA (بدون امضا) روی macOS رانر و انتشار آن به‌صورت GitHub Release
-# با لینک مستقیم دانلود عمومی.
-#
-# نصب روی آیفون: IPA بدون امضاست؛ با AltStore / Sideloadly و اپل‌آیدی شخصی
-# نصب می‌شود، یا برای TestFlight / App Store باید با اکانت توسعه‌دهنده امضا شود.
 on:
   workflow_dispatch:
   push:
@@ -38,8 +33,27 @@ jobs:
         id: version
         run: echo "ver=$(grep '^version:' pubspec.yaml | awk '{print $2}')" >> "$GITHUB_OUTPUT"
 
-      - name: Build unsigned IPA
-        run: flutter build ipa --no-codesign --release
+      - name: Build Runner.app (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: List build output
+        run: ls -laR build/ios/ | head -60
+
+      - name: Package unsigned IPA
+        run: |
+          set -euxo pipefail
+          APP_DIR="build/ios/iphoneos"
+          if [ -d "$APP_DIR/Runner.app" ]; then
+            rm -rf Payload maliiiii-ios.ipa
+            mkdir -p Payload
+            cp -R "$APP_DIR/Runner.app" Payload/
+            zip -qry maliiiii-ios.ipa Payload
+            ls -lh maliiiii-ios.ipa
+          else
+            echo "Runner.app NOT FOUND at $APP_DIR"
+            find build -maxdepth 4 -type d -name "*.app" -print
+            exit 1
+          fi
 
       - name: Create Release with IPA
         uses: softprops/action-gh-release@v2
@@ -50,5 +64,5 @@ jobs:
             فایل IPA نسخهٔ ${{ steps.version.outputs.ver }} ساخته‌شده با Flutter 3.47.
             - نصب: AltStore یا Sideloadly + اپل‌آیدی شخصی (هر ۷ روز تمدید)
             - انتشار رسمی: نیاز به اکانت Apple Developer (TestFlight / App Store)
-          files: build/ios/ipa/*.ipa
+          files: maliiiii-ios.ipa
           fail_on_unmatched_files: true
