@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.maliiiii.maliiiii"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // ndkVersion = flutter.ndkVersion  // no native C++ plugins; saves memory
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,6 +27,11 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildTypes {

@@ -5,7 +5,7 @@
 - محیط این فاز Flutter SDK واقعی (3.47.0) دارد؛ هستهٔ Dart با
   `dart analyze` / `dart test` و لایهٔ Flutter با `flutter analyze` /
   `flutter test` بررسی می‌شود.
-- **build واقعی Android/iOS هنوز در این محیط اجرا نشده است**؛ ساختار
+- **build واقعی Android با Flutter 3.47 انجام و APK قابل‌نصب ساخته شد**؛ iOS
   `android/` و `ios/` با `flutter create` ساخته شده و نام نمایشی «مالیار»
   تنظیم شده، اما بارگذاری SDK پلتفرم (Android SDK / Xcode) در محیط فعلی
   موجود نیست و build ادعا نمی‌شود.

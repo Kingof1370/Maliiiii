@@ -1,7 +1,7 @@
 name: maliiiii
 description: دستیار مالی شخصی فارسی — آفلاین، خصوصی و سه‌بعدی
 publish_to: none
-version: 1.7.0
+version: 1.8.0
 
 environment:
   sdk: ">=3.10.0 <4.0.0"
